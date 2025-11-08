@@ -16,6 +16,7 @@ import {
 import { motion } from "framer-motion";
 import useBodyScrollLock from "../../hooks/useBodyScrollLock";
 import Sidebar from "./Sidebar";
+import { NavLink } from "react-router-dom";
 
 const Navbar = ({
   wishlistCount = 0,
@@ -38,11 +39,36 @@ const Navbar = ({
   const userMenuRef = useRef(null);
 
   const categories = [
-    { name: "Electronics", href: "#electronics", icon: "📱" },
-    { name: "Fashion", href: "#fashion", icon: "👕" },
-    { name: "Accessories", href: "#accessories", icon: "⌚" },
-    { name: "Sports", href: "#sports", icon: "⚽" },
-    { name: "Books", href: "#books", icon: "📚" },
+    {
+      id: "electronics",
+      name: "Electronics",
+      href: "/products?categories=Electronics",
+      icon: "📱",
+    },
+    {
+      id: "fashion",
+      name: "Fashion",
+      href: "/products?categories=Fashion",
+      icon: "👕",
+    },
+    {
+      id: "accessories",
+      name: "Accessories",
+      href: "/products?categories=Accessories",
+      icon: "⌚",
+    },
+    {
+      id: "sports",
+      name: "Sports",
+      href: "/products?categories=Sports",
+      icon: "⚽",
+    },
+    {
+      id: "books",
+      name: "Books",
+      href: "/products?categories=Books",
+      icon: "📚",
+    },
   ];
 
   useEffect(() => {
@@ -106,7 +132,7 @@ const Navbar = ({
               </button>
 
               <motion.a
-                href="/"
+                to="/"
                 className="relative text-2xl font-bold bg-linear-to-r from-red-600 via-pink-500 to-red-600 bg-clip-text text-transparent hover:from-red-700 hover:to-purple-700 transition-all bg-size-[300%_auto]"
                 animate={{
                   backgroundPosition: ["0% 50%", "200% 50%"],
@@ -122,12 +148,12 @@ const Navbar = ({
               </motion.a>
 
               <nav className="hidden lg:flex items-center gap-8">
-                <a
-                  href="#"
+                <NavLink
+                  to="/"
                   className="text-gray-700 hover:text-red-600 font-medium transition-colors"
                 >
                   Home
-                </a>
+                </NavLink>
 
                 <div className="relative" ref={categoryRef}>
                   <button
@@ -146,33 +172,33 @@ const Navbar = ({
                   {categoryOpen && (
                     <div className="absolute left-0 mt-3 w-64 bg-white shadow-xl rounded-xl border border-gray-100 py-2">
                       {categories.map((cat) => (
-                        <a
+                        <NavLink
                           key={cat.name}
-                          href={cat.href}
+                          to={cat.href}
                           className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
                           onClick={() => setCategoryOpen(false)}
                         >
                           <span className="text-xl">{cat.icon}</span>
                           <span className="font-medium">{cat.name}</span>
-                        </a>
+                        </NavLink>
                       ))}
                     </div>
                   )}
                 </div>
 
-                <a
-                  href="/products"
+                <NavLink
+                  to="/products"
                   className="text-gray-700 hover:text-red-600 font-medium transition-colors"
                 >
                   All products
-                </a>
+                </NavLink>
 
-                <a
-                  href="#about"
+                <NavLink
+                  to="#about"
                   className="text-gray-700 hover:text-red-600 font-medium transition-colors"
                 >
                   About
-                </a>
+                </NavLink>
               </nav>
             </div>
 
@@ -242,29 +268,29 @@ const Navbar = ({
                         </p>
                       </div>
 
-                      <a
-                        href="#profile"
+                      <NavLink
+                        to="#profile"
                         className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
                       >
                         <User className="w-4 h-4" />
                         <span>My Profile</span>
-                      </a>
+                      </NavLink>
 
-                      <a
-                        href="#orders"
+                      <NavLink
+                        to="#orders"
                         className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
                       >
                         <Package className="w-4 h-4" />
                         <span>My Orders</span>
-                      </a>
+                      </NavLink>
 
-                      <a
-                        href="#settings"
+                      <NavLink
+                        to="#settings"
                         className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
                       >
                         <Settings className="w-4 h-4" />
                         <span>Settings</span>
-                      </a>
+                      </NavLink>
 
                       <div className="border-t border-gray-100 mt-2 pt-2">
                         <button
@@ -309,7 +335,6 @@ const Navbar = ({
       {mobileOpen && (
         <Sidebar
           onClose={() => setMobileOpen(false)}
-          isAuthenticated={isAuthenticated}
           logo={logo}
           onSignIn={onSignIn}
           onSignOut={onSignOut}

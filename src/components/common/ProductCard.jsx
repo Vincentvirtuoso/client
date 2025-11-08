@@ -154,7 +154,7 @@ const ProductCard = ({
   );
 
   const handleCardClick = useCallback(() => {
-    // navigate(`/product/${id}`);
+    navigate(`/product/${id}`);
   }, [id, navigate]);
 
   const handleKeyPress = useCallback(
@@ -174,7 +174,7 @@ const ProductCard = ({
 
   return (
     <motion.article
-      className={`group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 ${cardClassName} flex flex-col ${
+      className={`group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 ${cardClassName} flex flex-col h-full ${
         compact ? "compact-mode" : ""
       }`}
       onMouseEnter={() => setIsHovered(true)}

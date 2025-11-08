@@ -12,7 +12,10 @@ const CartQuantityUpdater = ({ textSize, product, compact = true }) => {
   const isInCart = !!cartItem;
 
   // Add item to cart
-  const handleAddToCart = () => {
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!inStock) {
       toast.error("This item is currently out of stock.");
       return;
@@ -23,7 +26,10 @@ const CartQuantityUpdater = ({ textSize, product, compact = true }) => {
   };
 
   // Increase quantity
-  const handleIncrement = () => {
+  const handleIncrement = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (cartItem?.quantity >= stockCount) {
       toast.error(`Only ${stockCount} units available.`);
       return;
@@ -34,7 +40,10 @@ const CartQuantityUpdater = ({ textSize, product, compact = true }) => {
   };
 
   // Decrease quantity
-  const handleDecrement = () => {
+  const handleDecrement = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     decrementQuantity(id);
     toast("Removed one unit 🗑️", { icon: "⚠️" });
   };
@@ -82,7 +91,7 @@ const CartQuantityUpdater = ({ textSize, product, compact = true }) => {
   return (
     <motion.div
       layout
-      className="flex items-center justify-between px-1 py-1 border border-red-500/60 rounded-full bg-red-200/20 gap-2"
+      className="flex items-center justify-between px-1 py-1 border border-red-500/60 rounded-full bg-red-200/20 gap-2 mt-auto"
     >
       <button
         onClick={handleDecrement}

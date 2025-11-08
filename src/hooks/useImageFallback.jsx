@@ -59,16 +59,9 @@ export default function useImageFallback(src, options = {}) {
   // Timeout safeguard for loading
   useEffect(() => {
     if (!isLoading) return;
-    const timeoutId = setTimeout(() => setIsLoading(false), 10000);
+    const timeoutId = setTimeout(() => setIsLoading(false), 4000);
     return () => clearTimeout(timeoutId);
   }, [isLoading]);
-
-  // const shimmerClass = useMemo(() => {
-  //   const base = "animate-pulse bg-gray-200 dark:bg-gray-800 rounded-md";
-  //   return options.shimmerClassName
-  //     ? `${base} ${options.shimmerClassName}`
-  //     : base;
-  // }, [options.shimmerClassName]);
 
   const render = useCallback(
     (props = {}) => {

@@ -359,15 +359,14 @@ const ProductDetail = () => {
               ))}
             </div>
 
-            <CartQuantityUpdater product={product} textSize={"lg"} />
-
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
+              <CartQuantityUpdater product={product} textSize={"lg"} />
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 disabled={!product.inStock}
-                className={`py-4 px-8 rounded-xl font-semibold text-lg border transition-colors ${
+                className={`py-2 px-8 rounded-xl font-semibold text-lg border transition-colors ${
                   product.inStock
                     ? "btn-outline"
                     : "border-gray-300 text-gray-500 cursor-not-allowed"
@@ -380,21 +379,21 @@ const ProductDetail = () => {
             {/* Features */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-gray-200">
               <div className="flex items-center gap-3 text-gray-600">
-                <LuTruck className="w-5 h-5 text-green-600" />
+                <LuTruck className="w-5 h-5 text-green-600 shrink-0" />
                 <div>
                   <p className="font-medium">Free Shipping</p>
                   <p className="text-sm">On orders over ₦100</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 text-gray-600">
-                <LuShield className="w-5 h-5 text-red-600" />
+                <LuShield className="w-5 h-5 text-red-600 shrink-0" />
                 <div>
                   <p className="font-medium">2-Year Warranty</p>
                   <p className="text-sm">Full protection</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 text-gray-600">
-                <LuCheck className="w-5 h-5 text-purple-600" />
+                <LuCheck className="w-5 h-5 text-purple-600 shrink-0" />
                 <div>
                   <p className="font-medium">30-Day Returns</p>
                   <p className="text-sm">No questions asked</p>

@@ -11,12 +11,11 @@ import { NavLink, useLocation } from "react-router-dom";
 
 const Sidebar = ({
   onClose,
-  logo,
-  userName,
-  isAuthenticated,
+  userName = "Felix Vincent",
+  isAuthenticated = true,
   onSignIn,
   onSignOut,
-  wishlistCount,
+  wishlistCount = 6,
   categories,
 }) => {
   const { pathname } = useLocation();
@@ -37,13 +36,14 @@ const Sidebar = ({
       />
 
       <aside className="fixed top-0 left-0 w-80 h-full bg-white shadow-2xl z-50 lg:hidden overflow-y-auto">
-        <div className="flex items-center justify-between px-6 h-16 border-b border-gray-200">
-          <a
-            href="/"
-            className="text-xl font-bold bg-linear-to-r from-red-600 to-red-600 bg-clip-text text-transparent"
-          >
-            {logo}
-          </a>
+        <div className="flex items-center justify-between px-6 h-30 border-b border-gray-200">
+          <NavLink href="/" className="overflow-hidden  rounded-full">
+            <img
+              src="/images/logo.jpg"
+              alt=""
+              className=" object-cover w-25 h-25"
+            />
+          </NavLink>
           <button
             onClick={onClose}
             className="text-gray-600 hover:text-gray-900"
@@ -76,12 +76,16 @@ const Sidebar = ({
         </div>
 
         <nav className="px-4 py-6 space-y-2">
-          <a
+          <NavLink
             href="/"
-            className="block px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg font-medium transition-colors"
+            className={`px-4 py-2 rounded-md transition-colors block hover:bg-red-50 font-medium ${
+              window.location.pathname === "/"
+                ? "text-red-600 font-semibold"
+                : "text-gray-700 hover:text-red-500"
+            }`}
           >
             Home
-          </a>
+          </NavLink>
 
           <details className="group">
             <summary className="flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg cursor-pointer font-medium transition-colors">
@@ -90,14 +94,20 @@ const Sidebar = ({
             </summary>
             <div className="mt-1 ml-4 space-y-1">
               {categories.map((cat) => (
-                <a
-                  key={cat.name}
-                  href={cat.href}
-                  className="flex items-center gap-3 px-4 py-2.5 text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+                <NavLink
+                  key={cat.id}
+                  to={cat.href}
+                  className={({ isActive }) =>
+                    `px-4 py-2 rounded-md transition-colors block hover:bg-red-50 font-medium ${
+                      isActive
+                        ? "text-red-600 font-semibold"
+                        : "text-gray-700 hover:text-red-500"
+                    }`
+                  }
                 >
                   <span className="text-lg">{cat.icon}</span>
                   <span>{cat.name}</span>
-                </a>
+                </NavLink>
               ))}
             </div>
           </details>
@@ -125,17 +135,29 @@ const Sidebar = ({
 
         {isAuthenticated && (
           <div className="px-4 py-4 border-t border-gray-200 space-y-2">
-            <a
-              href="#orders"
-              className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+            <NavLink
+              to="/orders"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-red-50 rounded-lg transition-colors ${
+                  isActive
+                    ? "text-red-600 font-semibold"
+                    : "text-gray-700 hover:text-red-500"
+                }`
+              }
             >
               <LuPackage className="w-5 h-5" />
               <span>My Orders</span>
-            </a>
+            </NavLink>
 
-            <a
-              href="#wishlist"
-              className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+            <NavLink
+              to="/wishlist"
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-red-50 rounded-lg transition-colors ${
+                  isActive
+                    ? "text-red-600 font-semibold"
+                    : "text-gray-700 hover:text-red-500"
+                }`
+              }
             >
               <LuHeart className="w-5 h-5" />
               <span>Wishlist</span>
@@ -144,7 +166,7 @@ const Sidebar = ({
                   {wishlistCount}
                 </span>
               )}
-            </a>
+            </NavLink>
 
             <button
               onClick={onSignOut}

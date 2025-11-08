@@ -1,120 +1,106 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  LuFilter,
-  LuX,
-  LuStar,
-  LuStarHalf,
-  LuShoppingCart,
-  LuHeart,
-  LuSearch,
-  LuChevronDown,
-  LuCheck,
-  LuSparkles,
-  LuAward,
-  LuClock,
-} from "react-icons/lu";
+import { LuFilter, LuX, LuSearch } from "react-icons/lu";
+import { useLocation, useNavigate } from "react-router-dom";
 import products from "../data/products";
 import ProductCard from "../components/common/ProductCard";
-
-const StarRating = ({ rating }) => {
-  const stars = [];
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
-
-  for (let i = 0; i < fullStars; i++) {
-    stars.push(
-      <LuStar key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-    );
-  }
-
-  if (hasHalfStar) {
-    stars.push(
-      <LuStarHalf key="half" className="w-4 h-4 text-yellow-400 fill-current" />
-    );
-  }
-
-  const remainingStars = 5 - stars.length;
-  for (let i = 0; i < remainingStars; i++) {
-    stars.push(<LuStar key={`empty-${i}`} className="w-4 h-4 text-gray-300" />);
-  }
-
-  return <div className="flex items-center gap-0.5">{stars}</div>;
-};
-
-const FilterDropdown = ({
-  label,
-  options,
-  selected,
-  onSelect,
-  multiple = false,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full px-4 py-2 text-sm border border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
-      >
-        <span>{label}</span>
-        <LuChevronDown
-          className={`w-4 h-4 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        />
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto"
-          >
-            {options.map((option) => (
-              <button
-                key={option}
-                onClick={() => {
-                  onSelect(option);
-                  if (!multiple) setIsOpen(false);
-                }}
-                className="flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-gray-50 transition-colors"
-              >
-                <span>{option}</span>
-                {selected.includes(option) && (
-                  <LuCheck className="w-4 h-4 text-red-600" />
-                )}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
+import AdvancedFilters from "../section/productList/AdvancedFilters";
 
 function ProductList() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [priceRange, setPriceRange] = useState([0, 300000]);
-  const [minRating, setMinRating] = useState(0);
-  const [inStockOnly, setInStockOnly] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState("featured");
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const categories = [...new Set(products.map((product) => product.category))];
-  const brands = [...new Set(products.map((product) => product.brand))];
+  // Get URL parameters
+  const searchParams = new URLSearchParams(location.search);
+
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("search") || ""
+  );
+  const [selectedCategories, setSelectedCategories] = useState(
+    searchParams.get("categories")
+      ? searchParams.get("categories").split(",")
+      : []
+  );
+  const [priceRange, setPriceRange] = useState([
+    parseInt(searchParams.get("minPrice")) || 0,
+    parseInt(searchParams.get("maxPrice")) || 300000,
+  ]);
+  const [minRating, setMinRating] = useState(
+    parseInt(searchParams.get("minRating")) || 0
+  );
+  const [inStockOnly, setInStockOnly] = useState(
+    searchParams.get("inStock") === "true"
+  );
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState(searchParams.get("sort") || "featured");
+
+  const categories = useMemo(
+    () => [...new Set(products.map((product) => product.category))],
+    []
+  );
+
+  // Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (searchTerm) params.set("search", searchTerm);
+    if (selectedCategories.length > 0)
+      params.set("categories", selectedCategories.join(","));
+    if (priceRange[0] > 0) params.set("minPrice", priceRange[0].toString());
+    if (priceRange[1] < 300000)
+      params.set("maxPrice", priceRange[1].toString());
+    if (minRating > 0) params.set("minRating", minRating.toString());
+    if (inStockOnly) params.set("inStock", "true");
+    if (sortBy !== "featured") params.set("sort", sortBy);
+
+    // Replace current URL without causing navigation
+    navigate(`?${params.toString()}`, { replace: true });
+  }, [
+    searchTerm,
+    selectedCategories,
+    priceRange,
+    minRating,
+    inStockOnly,
+    sortBy,
+    navigate,
+  ]);
+
+  // Re-apply filters whenever URL or pathname changes
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+
+    setSearchTerm(params.get("search") || "");
+
+    const urlCategories = params.get("categories");
+    if (urlCategories) {
+      const validCategories = urlCategories
+        .split(",")
+        .filter((cat) => categories.includes(cat));
+      setSelectedCategories(validCategories);
+    } else {
+      setSelectedCategories([]);
+    }
+
+    setPriceRange([
+      parseInt(params.get("minPrice")) || 0,
+      parseInt(params.get("maxPrice")) || 300000,
+    ]);
+
+    setMinRating(parseInt(params.get("minRating")) || 0);
+    setInStockOnly(params.get("inStock") === "true");
+    setSortBy(params.get("sort") || "featured");
+  }, [location.pathname, location.search, categories]);
 
   const filteredProducts = useMemo(() => {
     let filtered = products.filter((product) => {
       const matchesSearch =
+        searchTerm === "" ||
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.tags.some((tag) =>
-          tag.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        (product.tags &&
+          product.tags.some((tag) =>
+            tag.toLowerCase().includes(searchTerm.toLowerCase())
+          ));
 
       const matchesCategory =
         selectedCategories.length === 0 ||
@@ -144,7 +130,7 @@ function ProductList() {
         filtered.sort((a, b) => b.rating - a.rating);
         break;
       case "discount":
-        filtered.sort((a, b) => b.discount - a.discount);
+        filtered.sort((a, b) => (b.discount || 0) - (a.discount || 0));
         break;
       default:
         // Featured sorting - best sellers and new items first
@@ -167,24 +153,54 @@ function ProductList() {
     sortBy,
   ]);
 
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setSelectedCategories([]);
+    setPriceRange([0, 300000]);
+    setMinRating(0);
+    setInStockOnly(false);
+    setSortBy("featured");
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: 0.05, // Reduced for better performance
       },
     },
   };
 
   const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.3,
+        ease: "easeOut",
+      },
+    },
+    exit: {
+      opacity: 0,
+      y: -20,
+      transition: {
+        duration: 0.2,
+        ease: "easeIn",
+      },
+    },
+  };
+
+  const headerVariants = {
+    hidden: { y: -50, opacity: 0 },
     visible: {
       y: 0,
       opacity: 1,
       transition: {
         type: "spring",
-        stiffness: 100,
+        stiffness: 300,
+        damping: 30,
       },
     },
   };
@@ -193,8 +209,9 @@ function ProductList() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <motion.div
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
+        initial="hidden"
+        animate="visible"
+        variants={headerVariants}
         className=""
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -203,7 +220,7 @@ function ProductList() {
               className="text-4xl font-bold text-gray-900 mb-4"
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 200 }}
+              transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
             >
               Product Collection
             </motion.h1>
@@ -211,7 +228,7 @@ function ProductList() {
               className="text-xl text-gray-600 max-w-2xl mx-auto"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.3 }}
             >
               Discover our carefully curated selection of premium products
             </motion.p>
@@ -221,7 +238,12 @@ function ProductList() {
 
       {/* Filters and Search Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col lg:flex-row gap-4 mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="flex flex-col lg:flex-row gap-4 mb-8"
+        >
           {/* Search Bar */}
           <div className="flex-1 relative">
             <LuSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -263,161 +285,87 @@ function ProductList() {
             )}{" "}
             {showFilters ? "Close" : "Filters"}
           </button>
-        </div>
+        </motion.div>
 
         {/* Advanced Filters */}
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {showFilters && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="bg-white p-6 rounded-lg shadow-md border border-gray-200 mb-8 "
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Category Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category
-                  </label>
-                  <FilterDropdown
-                    label="Select Categories"
-                    options={categories}
-                    selected={selectedCategories}
-                    onSelect={(category) => {
-                      setSelectedCategories((prev) =>
-                        prev.includes(category)
-                          ? prev.filter((c) => c !== category)
-                          : [...prev, category]
-                      );
-                    }}
-                    multiple={true}
-                  />
-                </div>
-
-                {/* Price Range */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Price Range: ₦{priceRange[0].toLocaleString()} - ₦
-                    {priceRange[1].toLocaleString()}
-                  </label>
-                  <div className="space-y-2">
-                    <input
-                      type="range"
-                      min="0"
-                      max="300000"
-                      step="1000"
-                      value={priceRange[0]}
-                      onChange={(e) =>
-                        setPriceRange([parseInt(e.target.value), priceRange[1]])
-                      }
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <input
-                      type="range"
-                      min="0"
-                      max="300000"
-                      step="1000"
-                      value={priceRange[1]}
-                      onChange={(e) =>
-                        setPriceRange([priceRange[0], parseInt(e.target.value)])
-                      }
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                  </div>
-                </div>
-
-                {/* Rating Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Minimum Rating
-                  </label>
-                  <div className="flex gap-2 flex-wrap">
-                    {[0, 1, 2, 3, 4, 4.5].map((rating) => (
-                      <button
-                        key={rating}
-                        onClick={() => setMinRating(rating)}
-                        className={`flex items-center gap-1 px-3 py-2 rounded-lg border transition-colors ${
-                          minRating === rating
-                            ? "bg-red-100 border-red-500 text-red-700"
-                            : "bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200"
-                        }`}
-                      >
-                        <StarRating rating={rating} />
-                        {rating > 0 && <span className="text-xs">+</span>}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Stock Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Availability
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={inStockOnly}
-                      onChange={(e) => setInStockOnly(e.target.checked)}
-                      className="rounded border-gray-300 text-red-600 focus:ring-red-500"
-                    />
-                    <span>In Stock Only</span>
-                  </label>
-                </div>
-              </div>
+              <AdvancedFilters
+                categories={categories}
+                selectedCategories={selectedCategories}
+                setSelectedCategories={setSelectedCategories}
+                priceRange={priceRange}
+                setInStockOnly={setInStockOnly}
+                setMinRating={setMinRating}
+                minRating={minRating}
+                inStockOnly={inStockOnly}
+                setPriceRange={setPriceRange}
+              />
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Results Count */}
-        <div className="flex items-center justify-between mb-6">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="flex items-center justify-between mb-6"
+        >
           <p className="text-gray-600">
             Showing {filteredProducts.length} of {products.length} products
           </p>
           {(searchTerm ||
             selectedCategories.length > 0 ||
             minRating > 0 ||
-            inStockOnly) && (
+            inStockOnly ||
+            priceRange[0] > 0 ||
+            priceRange[1] < 300000) && (
             <button
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedCategories([]);
-                setPriceRange([0, 300000]);
-                setMinRating(0);
-                setInStockOnly(false);
-              }}
+              onClick={clearAllFilters}
               className="text-red-600 hover:text-red-700 font-medium transition-colors"
             >
               Clear all filters
             </button>
           )}
-        </div>
+        </motion.div>
 
         {/* Product Grid */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-        >
-          <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`grid-${filteredProducts.length}-${sortBy}`} // Change key when content changes
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch"
+          >
             {filteredProducts.map((product) => (
-              <ProductCard
-                product={product}
+              <motion.div
                 key={product.id}
-                query={searchTerm}
-                compact
-              />
+                variants={itemVariants}
+                layout
+                className="h-full"
+                transition={{ duration: 0.2 }}
+              >
+                <ProductCard product={product} query={searchTerm} compact />
+              </motion.div>
             ))}
-          </AnimatePresence>
-        </motion.div>
+          </motion.div>
+        </AnimatePresence>
 
         {/* Empty State */}
         {filteredProducts.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             className="text-center py-12"
           >
             <div className="text-gray-400 mb-4">
@@ -430,13 +378,7 @@ function ProductList() {
               Try adjusting your search or filters
             </p>
             <button
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedCategories([]);
-                setPriceRange([0, 300000]);
-                setMinRating(0);
-                setInStockOnly(false);
-              }}
+              onClick={clearAllFilters}
               className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
               Clear all filters

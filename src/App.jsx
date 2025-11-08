@@ -18,6 +18,7 @@ function App() {
         toastOptions={{
           style: { background: "#333", color: "#fff" },
           success: { iconTheme: { primary: "#fb2c36", secondary: "#fff" } },
+          duration: 2000,
         }}
       />
     </div>
