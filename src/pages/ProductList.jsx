@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LuFilter, LuX, LuSearch } from "react-icons/lu";
+import { LuFilter, LuX, LuSearch, LuTag } from "react-icons/lu";
 import { useLocation, useNavigate } from "react-router-dom";
 import products from "../data/products";
 import ProductCard from "../components/common/ProductCard";
@@ -153,6 +153,64 @@ function ProductList() {
     sortBy,
   ]);
 
+  // Get active filters for display
+  const activeFilters = useMemo(() => {
+    const filters = [];
+
+    if (searchTerm) {
+      filters.push({
+        type: "search",
+        label: `Search: "${searchTerm}"`,
+        onRemove: () => setSearchTerm(""),
+      });
+    }
+
+    selectedCategories.forEach((category) => {
+      filters.push({
+        type: "category",
+        label: category,
+        onRemove: () =>
+          setSelectedCategories((prev) =>
+            prev.filter((cat) => cat !== category)
+          ),
+      });
+    });
+
+    if (priceRange[0] > 0) {
+      filters.push({
+        type: "price",
+        label: `Min: ₦${priceRange[0].toLocaleString()}`,
+        onRemove: () => setPriceRange([0, priceRange[1]]),
+      });
+    }
+
+    if (priceRange[1] < 300000) {
+      filters.push({
+        type: "price",
+        label: `Max: ₦${priceRange[1].toLocaleString()}`,
+        onRemove: () => setPriceRange([priceRange[0], 300000]),
+      });
+    }
+
+    if (minRating > 0) {
+      filters.push({
+        type: "rating",
+        label: `${minRating}+ Stars`,
+        onRemove: () => setMinRating(0),
+      });
+    }
+
+    if (inStockOnly) {
+      filters.push({
+        type: "stock",
+        label: "In Stock Only",
+        onRemove: () => setInStockOnly(false),
+      });
+    }
+
+    return filters;
+  }, [searchTerm, selectedCategories, priceRange, minRating, inStockOnly]);
+
   const clearAllFilters = () => {
     setSearchTerm("");
     setSelectedCategories([]);
@@ -167,7 +225,7 @@ function ProductList() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.05, // Reduced for better performance
+        staggerChildren: 0.05,
       },
     },
   };
@@ -202,6 +260,20 @@ function ProductList() {
         stiffness: 300,
         damping: 30,
       },
+    },
+  };
+
+  const filterTagVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: { type: "spring", stiffness: 400, damping: 25 },
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.8,
+      transition: { duration: 0.2 },
     },
   };
 
@@ -242,25 +314,13 @@ function ProductList() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="flex flex-col lg:flex-row gap-4 mb-8"
+          className="flex gap-4 mb-8"
         >
-          {/* Search Bar */}
-          <div className="flex-1 relative">
-            <LuSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Search products, brands, or tags..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-            />
-          </div>
-
           {/* Sort Dropdown */}
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+            className="px-4 rounded-lg focus:border-transparent"
           >
             <option value="featured">Featured</option>
             <option value="price-low">Price: Low to High</option>
@@ -311,35 +371,84 @@ function ProductList() {
           )}
         </AnimatePresence>
 
-        {/* Results Count */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="flex items-center justify-between mb-6"
-        >
-          <p className="text-gray-600">
-            Showing {filteredProducts.length} of {products.length} products
-          </p>
-          {(searchTerm ||
-            selectedCategories.length > 0 ||
-            minRating > 0 ||
-            inStockOnly ||
-            priceRange[0] > 0 ||
-            priceRange[1] < 300000) && (
-            <button
-              onClick={clearAllFilters}
-              className="text-red-600 hover:text-red-700 font-medium transition-colors"
+        {/* Active Filters Tags Section */}
+        <AnimatePresence>
+          {(activeFilters.length > 0 || searchTerm) && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-6"
             >
-              Clear all filters
-            </button>
+              {/* Results Count */}
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-gray-600">
+                  {searchTerm ? (
+                    <>
+                      Showing {filteredProducts.length} results for "
+                      <span className="font-semibold">{searchTerm}</span>"
+                    </>
+                  ) : (
+                    <>Showing {filteredProducts.length} products</>
+                  )}
+                </p>
+
+                <button
+                  onClick={clearAllFilters}
+                  className="text-red-600 hover:text-red-700 font-medium transition-colors text-sm flex items-center gap-1"
+                >
+                  <LuX className="w-4 h-4" />
+                  Clear all
+                </button>
+              </div>
+
+              {/* Filter Tags */}
+              <div className="flex flex-wrap gap-2">
+                <AnimatePresence>
+                  {activeFilters.map((filter, index) => (
+                    <motion.div
+                      key={`${filter.type}-${filter.label}`}
+                      variants={filterTagVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      className="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-full px-3 py-1.5 text-sm shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      <LuTag className="w-3 h-3 text-gray-400" />
+                      <span className="text-gray-700">{filter.label}</span>
+                      <button
+                        onClick={filter.onRemove}
+                        className="text-gray-400 hover:text-red-500 transition-colors p-0.5 rounded-full hover:bg-red-50"
+                        aria-label={`Remove ${filter.label} filter`}
+                      >
+                        <LuX className="w-3 h-3" />
+                      </button>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </motion.div>
           )}
-        </motion.div>
+        </AnimatePresence>
+
+        {/* Default Results Count when no filters */}
+        {activeFilters.length === 0 && !searchTerm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="flex items-center justify-between mb-6"
+          >
+            <p className="text-gray-600">
+              Showing {filteredProducts.length} products
+            </p>
+          </motion.div>
+        )}
 
         {/* Product Grid */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={`grid-${filteredProducts.length}-${sortBy}`} // Change key when content changes
+            key={`grid-${filteredProducts.length}-${sortBy}`}
             variants={containerVariants}
             initial="hidden"
             animate="visible"

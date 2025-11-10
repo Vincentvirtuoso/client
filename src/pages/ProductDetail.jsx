@@ -116,8 +116,8 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-300 sticky top-16 z-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* <nav className="bg-white shadow-sm border-b border-gray-300 sticky top-16 z-20">
+        <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <button
               onClick={() => navigate("/products")}
@@ -145,9 +145,9 @@ const ProductDetail = () => {
             </div>
           </div>
         </div>
-      </nav>
+      </nav> */}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -163,7 +163,7 @@ const ProductDetail = () => {
                   key={selectedImage}
                   src={product.images[selectedImage]}
                   alt={product.name}
-                  className={`w-full h-full object-cover`}
+                  size={"full"}
                 />
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -256,160 +256,156 @@ const ProductDetail = () => {
               </div>
             )}
           </motion.div>
+        </motion.div>
+        <motion.div variants={itemVariants} className="space-y-6">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <span>{product.category}</span>
+            <span>•</span>
+            <span>{product.subCategory}</span>
+            <span>•</span>
+            <span className="text-gray-900">{product.brand}</span>
+          </div>
 
-          {/* Product Info */}
-          <motion.div variants={itemVariants} className="space-y-6">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <span>{product.category}</span>
-              <span>•</span>
-              <span>{product.subCategory}</span>
-              <span>•</span>
-              <span className="text-gray-900">{product.brand}</span>
-            </div>
+          {/* Title and Brand */}
+          <div>
+            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+              {product.name}
+            </h1>
+            <p className="text-lg text-gray-600">by {product.brand}</p>
+          </div>
 
-            {/* Title and Brand */}
-            <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                {product.name}
-              </h1>
-              <p className="text-lg text-gray-600">by {product.brand}</p>
-            </div>
-
-            {/* Rating and Reviews */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <StarRating rating={product.rating} size="lg" />
-                <span className="text-lg font-semibold text-gray-900">
-                  {product.rating}
-                </span>
-              </div>
-              <span className="text-gray-500">•</span>
-              <span className="text-gray-600">
-                {product.reviewCount} reviews
+          {/* Rating and Reviews */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <StarRating rating={product.rating} size="lg" />
+              <span className="text-lg font-semibold text-gray-900">
+                {product.rating}
               </span>
             </div>
+            <span className="text-gray-500">•</span>
+            <span className="text-gray-600">{product.reviewCount} reviews</span>
+          </div>
 
-            {/* Price Section */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-4xl font-bold text-gray-900">
-                  ₦{product.price.toLocaleString()}
-                </span>
-                {product.originalPrice > product.price && (
-                  <>
-                    <span className="text-2xl text-gray-500 line-through">
-                      ₦{product.originalPrice.toLocaleString()}
-                    </span>
-                    <span className="px-2 py-1 bg-red-100 text-red-700 font-medium rounded-lg">
-                      Save ₦
-                      {(product.originalPrice - product.price).toLocaleString()}
-                    </span>
-                  </>
-                )}
-              </div>
-              {product.discount > 0 && (
-                <p className="text-green-600 font-medium">
-                  {product.discount}% discount applied
-                </p>
+          {/* Price Section */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-4xl font-bold text-gray-900">
+                ₦{product.price.toLocaleString()}
+              </span>
+              {product.originalPrice > product.price && (
+                <>
+                  <span className="text-2xl text-gray-500 line-through">
+                    ₦{product.originalPrice.toLocaleString()}
+                  </span>
+                  <span className="px-2 py-1 bg-red-100 text-red-700 font-medium rounded-lg">
+                    Save ₦
+                    {(product.originalPrice - product.price).toLocaleString()}
+                  </span>
+                </>
               )}
             </div>
+            {product.discount > 0 && (
+              <p className="text-green-600 font-medium">
+                {product.discount}% discount applied
+              </p>
+            )}
+          </div>
 
-            {/* Stock Status */}
-            <div
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
+          {/* Stock Status */}
+          <div
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
+              product.inStock
+                ? product.availabilityType === "limited"
+                  ? "bg-orange-100 text-orange-700"
+                  : "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
+            {product.inStock ? (
+              <>
+                <LuCheck className="w-4 h-4" />
+                {product.availabilityType === "limited" ? (
+                  <span>Only {product.stockCount} left in stock</span>
+                ) : (
+                  <span>In Stock</span>
+                )}
+              </>
+            ) : (
+              <>
+                <LuClock className="w-4 h-4" />
+                <span>Out of Stock</span>
+              </>
+            )}
+          </div>
+
+          {/* Description */}
+          <p className="text-lg text-gray-700 leading-relaxed">
+            {product.description}
+          </p>
+
+          {/* Tags */}
+          <div className="flex flex-wrap gap-2">
+            {product.tags.map((tag, index) => (
+              <span
+                key={index}
+                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <CartQuantityUpdater product={product} textSize={"lg"} />
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              disabled={!product.inStock}
+              className={`py-2 px-8 rounded-xl font-semibold text-lg border transition-colors ${
                 product.inStock
-                  ? product.availabilityType === "limited"
-                    ? "bg-orange-100 text-orange-700"
-                    : "bg-green-100 text-green-700"
-                  : "bg-red-100 text-red-700"
+                  ? "btn-outline"
+                  : "border-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >
-              {product.inStock ? (
-                <>
-                  <LuCheck className="w-4 h-4" />
-                  {product.availabilityType === "limited" ? (
-                    <span>Only {product.stockCount} left in stock</span>
-                  ) : (
-                    <span>In Stock</span>
-                  )}
-                </>
-              ) : (
-                <>
-                  <LuClock className="w-4 h-4" />
-                  <span>Out of Stock</span>
-                </>
-              )}
-            </div>
+              Buy Now
+            </motion.button>
+          </div>
 
-            {/* Description */}
-            <p className="text-lg text-gray-700 leading-relaxed">
-              {product.description}
-            </p>
-
-            {/* Tags */}
-            <div className="flex flex-wrap gap-2">
-              {product.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <CartQuantityUpdater product={product} textSize={"lg"} />
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                disabled={!product.inStock}
-                className={`py-2 px-8 rounded-xl font-semibold text-lg border transition-colors ${
-                  product.inStock
-                    ? "btn-outline"
-                    : "border-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
-              >
-                Buy Now
-              </motion.button>
-            </div>
-
-            {/* Features */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-gray-200">
-              <div className="flex items-center gap-3 text-gray-600">
-                <LuTruck className="w-5 h-5 text-green-600 shrink-0" />
-                <div>
-                  <p className="font-medium">Free Shipping</p>
-                  <p className="text-sm">On orders over ₦100</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <LuShield className="w-5 h-5 text-red-600 shrink-0" />
-                <div>
-                  <p className="font-medium">2-Year Warranty</p>
-                  <p className="text-sm">Full protection</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                <LuCheck className="w-5 h-5 text-purple-600 shrink-0" />
-                <div>
-                  <p className="font-medium">30-Day Returns</p>
-                  <p className="text-sm">No questions asked</p>
-                </div>
+          {/* Features */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-gray-200">
+            <div className="flex items-center gap-3 text-gray-600">
+              <LuTruck className="w-5 h-5 text-green-600 shrink-0" />
+              <div>
+                <p className="font-medium">Free Shipping</p>
+                <p className="text-sm">On orders over ₦100</p>
               </div>
             </div>
-          </motion.div>
+            <div className="flex items-center gap-3 text-gray-600">
+              <LuShield className="w-5 h-5 text-red-600 shrink-0" />
+              <div>
+                <p className="font-medium">2-Year Warranty</p>
+                <p className="text-sm">Full protection</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 text-gray-600">
+              <LuCheck className="w-5 h-5 text-purple-600 shrink-0" />
+              <div>
+                <p className="font-medium">30-Day Returns</p>
+                <p className="text-sm">No questions asked</p>
+              </div>
+            </div>
+          </div>
         </motion.div>
 
         {/* Additional Information Tabs */}
         <motion.div
           variants={itemVariants}
-          className="mt-16 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+          className="mt-16 bg-white rounded-2xl shadow-sm border border-gray-100"
         >
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px overflow-y-auto whitespace-nowrap p-1">
+          <div className="border-b border-gray-200 overflow-x-auto overflow-y-hidden">
+            <nav className="grid grid-cols-4 -mb-px p-1 whitespace-nowrap">
               {[
                 { id: "description", label: "Description" },
                 { id: "specifications", label: "Specifications" },
@@ -419,7 +415,7 @@ const ProductDetail = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 py-3 px-6 text-center font-medium border-b-2 transition-colors ${
+                  className={`flex-1 py-3 px-4 text-center font-medium border-b-2 transition-colors ${
                     activeTab === tab.id
                       ? "border-red-500 text-red-600"
                       : "border-transparent text-gray-500 hover:text-gray-700"

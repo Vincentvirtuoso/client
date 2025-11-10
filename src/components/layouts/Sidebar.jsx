@@ -16,7 +16,7 @@ const Sidebar = ({
   onSignIn,
   onSignOut,
   wishlistCount = 6,
-  categories,
+  promoBannerVisible,
 }) => {
   const { pathname } = useLocation();
   const prevPathnameRef = useRef(pathname);
@@ -30,33 +30,116 @@ const Sidebar = ({
 
   return (
     <>
+      {/* Overlay for mobile only */}
       <div
-        className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+        className="fixed inset-0 bg-black/50 z-50 lg:hidden"
         onClick={onClose}
       />
 
-      <aside className="fixed top-0 left-0 w-80 h-full bg-white shadow-2xl z-50 lg:hidden overflow-y-auto">
-        <div className="flex items-center justify-between px-6 h-30 border-b border-gray-200">
-          <NavLink href="/" className="overflow-hidden  rounded-full">
+      <aside
+        className={`fixed ${
+          promoBannerVisible ? "top-14 lg:top-9" : "top-0"
+        } left-0 w-72 lg:w-72 h-full bg-white shadow-2xl z-50 lg:z-30 lg:shadow-none border-r border-gray-200 overflow-y-auto 
+                   transform transition-transform duration-300 
+                   lg:translate-x-0 flex flex-col`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 h-20 border-b border-gray-200">
+          <NavLink
+            to="/"
+            className="flex items-center gap-2 font-bold text-xl text-red-600"
+          >
             <img
               src="/images/logo.jpg"
-              alt=""
-              className=" object-cover w-25 h-25"
+              alt="Logo"
+              className="w-10 h-10 rounded-full object-cover"
             />
+            ShopVerse
           </NavLink>
           <button
             onClick={onClose}
-            className="text-gray-600 hover:text-gray-900"
+            className="text-gray-600 hover:text-gray-900 lg:hidden"
             aria-label="Close menu"
           >
             <LuX className="w-6 h-6" />
           </button>
         </div>
 
-        <div className="px-6 py-4 border-b border-gray-200">
+        {/* Navigation */}
+        <nav className="px-5 py-6 space-y-3 flex-1 overflow-y-auto">
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              `block px-4 py-2 rounded-md font-medium transition-colors ${
+                isActive
+                  ? "text-red-600 bg-red-50"
+                  : "text-gray-700 hover:text-red-600 hover:bg-red-50"
+              }`
+            }
+          >
+            Home
+          </NavLink>
+
+          {[
+            { href: "/products", label: "All Products" },
+            { href: "/about", label: "About" },
+            { href: "/contact", label: "Contact" },
+          ].map(({ href, label }) => (
+            <NavLink
+              key={href}
+              to={href}
+              className={({ isActive }) =>
+                `block px-4 py-2 rounded-md font-medium transition-colors ${
+                  isActive
+                    ? "text-red-600 bg-red-50"
+                    : "text-gray-700 hover:text-red-600 hover:bg-red-50"
+                }`
+              }
+            >
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Account Section */}
+        {isAuthenticated && (
+          <div className="px-4 py-4 border-t border-gray-200 space-y-2 flex-1 overflow-y-auto">
+            <NavLink
+              to="/orders"
+              className="flex items-center gap-3 px-4 py-2 rounded-md text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+            >
+              <LuPackage className="w-5 h-5" />
+              My Orders
+            </NavLink>
+
+            <NavLink
+              to="/wishlist"
+              className="flex items-center gap-3 px-4 py-2 rounded-md text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+            >
+              <LuHeart className="w-5 h-5" />
+              Wishlist
+              {wishlistCount > 0 && (
+                <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full px-2 py-1">
+                  {wishlistCount}
+                </span>
+              )}
+            </NavLink>
+
+            <button
+              onClick={onSignOut}
+              className="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors w-full"
+            >
+              <LuLogOut className="w-5 h-5" />
+              Sign Out
+            </button>
+          </div>
+        )}
+
+        {/* User Section */}
+        <div className="px-5 py-5 border-t border-gray-200 bg-white sticky bottom-0">
           {isAuthenticated ? (
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-linear-to-br from-red-500 to-red-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
                 {userName.charAt(0).toUpperCase()}
               </div>
               <div>
@@ -74,109 +157,6 @@ const Sidebar = ({
             </button>
           )}
         </div>
-
-        <nav className="px-4 py-6 space-y-2">
-          <NavLink
-            href="/"
-            className={`px-4 py-2 rounded-md transition-colors block hover:bg-red-50 font-medium ${
-              window.location.pathname === "/"
-                ? "text-red-600 font-semibold"
-                : "text-gray-700 hover:text-red-500"
-            }`}
-          >
-            Home
-          </NavLink>
-
-          <details className="group">
-            <summary className="flex items-center justify-between px-4 py-3 text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-lg cursor-pointer font-medium transition-colors">
-              <span>Categories</span>
-              <LuChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
-            </summary>
-            <div className="mt-1 ml-4 space-y-1">
-              {categories.map((cat) => (
-                <NavLink
-                  key={cat.id}
-                  to={cat.href}
-                  className={({ isActive }) =>
-                    `px-4 py-2 rounded-md transition-colors block hover:bg-red-50 font-medium ${
-                      isActive
-                        ? "text-red-600 font-semibold"
-                        : "text-gray-700 hover:text-red-500"
-                    }`
-                  }
-                >
-                  <span className="text-lg">{cat.icon}</span>
-                  <span>{cat.name}</span>
-                </NavLink>
-              ))}
-            </div>
-          </details>
-
-          {[
-            { href: "/products", label: "All Products" },
-            { href: "/about", label: "About" },
-            { href: "/contact", label: "Contact" },
-          ].map(({ href, label }) => (
-            <NavLink
-              key={href}
-              to={href}
-              className={({ isActive }) =>
-                `px-4 py-2 rounded-md transition-colors block hover:bg-red-50 font-medium ${
-                  isActive
-                    ? "text-red-600 font-semibold"
-                    : "text-gray-700 hover:text-red-500"
-                }`
-              }
-            >
-              {label}
-            </NavLink>
-          ))}
-        </nav>
-
-        {isAuthenticated && (
-          <div className="px-4 py-4 border-t border-gray-200 space-y-2">
-            <NavLink
-              to="/orders"
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-red-50 rounded-lg transition-colors ${
-                  isActive
-                    ? "text-red-600 font-semibold"
-                    : "text-gray-700 hover:text-red-500"
-                }`
-              }
-            >
-              <LuPackage className="w-5 h-5" />
-              <span>My Orders</span>
-            </NavLink>
-
-            <NavLink
-              to="/wishlist"
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-red-50 rounded-lg transition-colors ${
-                  isActive
-                    ? "text-red-600 font-semibold"
-                    : "text-gray-700 hover:text-red-500"
-                }`
-              }
-            >
-              <LuHeart className="w-5 h-5" />
-              <span>Wishlist</span>
-              {wishlistCount > 0 && (
-                <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full px-2 py-1">
-                  {wishlistCount}
-                </span>
-              )}
-            </NavLink>
-
-            <button
-              onClick={onSignOut}
-              className="flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors w-full"
-            >
-              <LuLogOut className="w-5 h-5" />
-              <span>Sign Out</span>
-            </button>
-          </div>
-        )}
       </aside>
     </>
   );

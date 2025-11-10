@@ -12,6 +12,7 @@ import OrderSuccess from "../pages/OrderSuccess";
 import NotFound from "../pages/NotFound";
 import LoginSignup from "../pages/auth/LoginSignup";
 import OrdersPage from "../pages/Orders";
+import SavedProducts from "../pages/SavedProducts";
 
 const router = createBrowserRouter([
   {
@@ -35,6 +36,14 @@ const router = createBrowserRouter([
         element: (
           // <ProtectedRoute>
           <OrdersPage />
+          // </ProtectedRoute>
+        ),
+      },
+      {
+        path: "wishlist",
+        element: (
+          // <ProtectedRoute>
+          <SavedProducts />
           // </ProtectedRoute>
         ),
       },
