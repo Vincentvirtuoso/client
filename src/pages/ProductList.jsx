@@ -320,7 +320,7 @@ function ProductList() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 rounded-lg focus:border-transparent"
+            className="px-4 py-3 rounded-lg focus:border-transparent "
           >
             <option value="featured">Featured</option>
             <option value="price-low">Price: Low to High</option>
@@ -332,10 +332,10 @@ function ProductList() {
           {/* Filter Toggle Button */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-4 py-2 ${
+            className={`flex items-center gap-2 px-4 py-3 ${
               !showFilters
                 ? "bg-red-600 hover:bg-red-700 text-white"
-                : "border border-red-600 text-red-600 hover:bg-red-50"
+                : "text-red-600 hover:bg-red-50"
             } rounded-lg transition-colors place-self-end text-sm`}
           >
             {showFilters ? (
@@ -407,7 +407,7 @@ function ProductList() {
                 <AnimatePresence>
                   {activeFilters.map((filter, index) => (
                     <motion.div
-                      key={`${filter.type}-${filter.label}`}
+                      key={`${filter.type}-${filter.label}-${index}`}
                       variants={filterTagVariants}
                       initial="hidden"
                       animate="visible"

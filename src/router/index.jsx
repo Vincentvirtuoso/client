@@ -11,8 +11,9 @@ import Checkout from "../pages/Checkout";
 import OrderSuccess from "../pages/OrderSuccess";
 import NotFound from "../pages/NotFound";
 import LoginSignup from "../pages/auth/LoginSignup";
-import OrdersPage from "../pages/Orders";
+import Orders from "../pages/Orders";
 import SavedProducts from "../pages/SavedProducts";
+import OrderDetail from "../pages/OrderDetail";
 
 const router = createBrowserRouter([
   {
@@ -35,7 +36,15 @@ const router = createBrowserRouter([
         path: "orders",
         element: (
           // <ProtectedRoute>
-          <OrdersPage />
+          <Orders />
+          // </ProtectedRoute>
+        ),
+      },
+      {
+        path: "order/:orderId",
+        element: (
+          // <ProtectedRoute>
+          <OrderDetail />
           // </ProtectedRoute>
         ),
       },

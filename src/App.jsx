@@ -53,7 +53,7 @@ const App = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="">
+        <div className="flex-1">
           <Navbar promoBannerVisible={promoBannerVisible} />
           <main
             className={`flex-1 lg:ml-72 transition-all ${

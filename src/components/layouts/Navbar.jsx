@@ -5,7 +5,6 @@ import {
   LuMenu as Menu,
   LuX as X,
   LuShoppingCart as ShoppingCart,
-  LuChevronDown as ChevronDown,
   LuSearch as Search,
   LuUser as User,
   LuHeart as Heart,
@@ -13,10 +12,8 @@ import {
   LuLogOut as LogOut,
   LuSettings as Settings,
   LuBell as Bell,
-  LuMic as Mic,
   LuClock as Clock,
   LuTrendingUp as TrendingUp,
-  LuCircleX as XCircle,
   LuCheck,
   LuChevronRight,
   LuChevronDown,
@@ -24,12 +21,11 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import useBodyScrollLock from "../../hooks/useBodyScrollLock";
 import Sidebar from "./Sidebar";
-import { NavLink, useNavigate } from "react-router-dom";
-import { categories } from "../../assets/sidebarAssets";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import MobileSearchMenu from "../others/MobileSearchMenu";
 
 const Navbar = ({
-  wishlistCount = 0,
+  wishlistCount = 2,
   isAuthenticated = true,
   userName = "Guest",
   onCartClick,
@@ -157,6 +153,11 @@ const Navbar = ({
   };
 
   const MotionNavLink = motion(NavLink);
+
+  const { pathname } = useLocation();
+  useEffect(() => {
+    setUserMenuOpen(false);
+  }, [pathname]);
 
   return (
     <>
@@ -510,18 +511,23 @@ const Navbar = ({
                       </div>
 
                       {[
-                        { icon: User, label: "My Profile", href: "#profile" },
-                        { icon: Package, label: "My Orders", href: "#orders" },
+                        { icon: User, label: "My Profile", href: "/profile" },
+                        {
+                          icon: Package,
+                          label: "My Orders",
+                          href: "/orders",
+                          badge: 4,
+                        },
                         {
                           icon: Heart,
                           label: "Wishlist",
-                          href: "#wishlist",
+                          href: "/wishlist",
                           badge: wishlistCount,
                         },
                         {
                           icon: Settings,
                           label: "Settings",
-                          href: "#settings",
+                          href: "/settings",
                         },
                       ].map((item, index) => (
                         <NavLink

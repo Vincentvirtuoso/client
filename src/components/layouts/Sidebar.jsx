@@ -38,10 +38,8 @@ const Sidebar = ({
 
       <aside
         className={`fixed ${
-          promoBannerVisible ? "top-14 lg:top-9" : "top-0"
-        } left-0 w-72 lg:w-72 h-full bg-white shadow-2xl z-50 lg:z-30 lg:shadow-none border-r border-gray-200 overflow-y-auto 
-                   transform transition-transform duration-300 
-                   lg:translate-x-0 flex flex-col`}
+          promoBannerVisible ? "pt-14 lg:pt-9" : "pt-0"
+        } top-0 left-0 w-72 lg:w-72 h-full bg-white shadow-2xl z-50 lg:z-30 lg:shadow-none border-r border-gray-200 overflow-y-auto  transform transition-all duration-300 lg:translate-x-0 flex flex-col`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 h-20 border-b border-gray-200">
@@ -103,7 +101,7 @@ const Sidebar = ({
 
         {/* Account Section */}
         {isAuthenticated && (
-          <div className="px-4 py-4 border-t border-gray-200 space-y-2 flex-1 overflow-y-auto">
+          <div className="px-4 py-4 border-t border-gray-200 space-y-2  overflow-y-auto">
             <NavLink
               to="/orders"
               className="flex items-center gap-3 px-4 py-2 rounded-md text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
