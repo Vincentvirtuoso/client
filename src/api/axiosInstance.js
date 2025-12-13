@@ -19,9 +19,10 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-/* =======================
-   RESPONSE INTERCEPTOR
-======================= */
+api.interceptors.request.use((config) => {
+  console.log("🍪 Cookies:", document.cookie);
+  return config;
+});
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
