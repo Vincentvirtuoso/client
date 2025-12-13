@@ -4,6 +4,7 @@ import {
   LuHeart,
   LuLogOut,
   LuPackage,
+  LuRefreshCw,
   LuUser,
   LuX,
 } from "react-icons/lu";
@@ -22,7 +23,9 @@ const Sidebar = ({
   const onSignIn = () => {
     window.location.href = "/auth";
   };
+
   const { user } = useAuth();
+  console.log(user);
 
   useEffect(() => {
     if (prevPathnameRef.current !== pathname) {

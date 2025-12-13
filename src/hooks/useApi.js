@@ -22,6 +22,8 @@ export const useApi = () => {
       const errorData = err.response?.data || { ...err };
       setError(errorData);
       throw errorData;
+    } finally {
+      setLoading(false);
     }
   }, []);
 

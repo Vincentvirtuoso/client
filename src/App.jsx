@@ -7,12 +7,13 @@ import Sidebar from "./components/layouts/Sidebar";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { LuX } from "react-icons/lu";
+import { AuthProvider } from "./context/AuthContext";
 
 const App = () => {
   const [promoBannerVisible, setPromoBannerVisible] = useState(true);
 
   return (
-    <>
+    <AuthProvider>
       <AnimatePresence>
         {promoBannerVisible && (
           <motion.div
@@ -80,7 +81,7 @@ const App = () => {
           }}
         />
       </div>
-    </>
+    </AuthProvider>
   );
 };
 

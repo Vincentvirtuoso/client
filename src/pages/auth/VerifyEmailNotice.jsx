@@ -18,7 +18,7 @@ const VerifyEmailNotice = () => {
   // Auto-redirect if user is already verified
   useEffect(() => {
     if (user?.emailVerified) {
-      navigate("/dashboard");
+      navigate("/");
     }
   }, [user, navigate]);
 

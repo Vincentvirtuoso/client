@@ -31,10 +31,11 @@ const VerifyEmail = () => {
         if (data?.user) {
           setUser(data.user);
         }
-      } else {
-        setVerificationStatus("error");
       }
     } catch (error) {
+      if (error?.code === "VERIFIED") {
+        return setVerificationStatus("success");
+      }
       setVerificationStatus("error");
     }
   };
@@ -59,7 +60,7 @@ const VerifyEmail = () => {
             if (user?.role) {
               navigate(`/${user.role}/dashboard`);
             } else {
-              navigate("/dashboard");
+              navigate("/");
             }
             return 0;
           }
@@ -75,7 +76,7 @@ const VerifyEmail = () => {
     if (user?.role) {
       navigate(`/${user.role}/dashboard`);
     } else {
-      navigate("/dashboard");
+      navigate("/");
     }
   };
 

@@ -11,38 +11,49 @@ const api = axios.create({
   },
 });
 
+/* ===================== REQUEST INTERCEPTOR ===================== */
 api.interceptors.request.use(
-  (config) => {
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (config) => config,
+  (error) => Promise.reject(error)
 );
 
+/* ===================== RESPONSE INTERCEPTOR ===================== */
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response) {
-      const errorData = {
-        message: error.response.data?.message || "An error occurred",
-        code: error.response.data?.code,
-        status: error.response.status,
-        ...error.response.data,
-      };
-      return Promise.reject(errorData);
-    } else if (error.request) {
+  async (error) => {
+    const originalRequest = error.config;
+
+    // No response (network error)
+    if (!error.response) {
       return Promise.reject({
         message: "No response from server. Please check your connection.",
         code: "NETWORK_ERROR",
       });
-    } else {
-      // Something else happened
-      return Promise.reject({
-        message: error.message || "An unexpected error occurred",
-        code: "UNKNOWN_ERROR",
-      });
     }
+
+    const { status, data } = error.response;
+
+    const normalizedError = {
+      message: data?.message || "An error occurred",
+      code: data?.code,
+      status,
+      ...data,
+    };
+
+    if (status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        await api.post("/auth/refresh-token");
+
+        return api(originalRequest);
+      } catch (refreshError) {
+        window.location.href = "/auth/login";
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(normalizedError);
   }
 );
 

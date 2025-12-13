@@ -18,8 +18,8 @@ import "swiper/css";
 import "swiper/css/effect-fade";
 import "swiper/css/pagination";
 import { useForm } from "../../hooks/useForm";
-import { useAuth } from "../../hooks/useAuth";
 import Spinner from "../../components/common/Spinner";
+import { useAuth } from "../../hooks/useAuth";
 
 const SocialButton = ({ children, onClick, className = "" }) => (
   <button
@@ -128,7 +128,6 @@ const LoginSignup = ({ authState }) => {
       if (isLogin && error?.code === "EMAIL_NOT_VERIFIED") {
         navigate("/auth/verify-email-notice", { state: { email: form.email } });
       }
-      console.log(error);
     }
   };
 
