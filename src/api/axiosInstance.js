@@ -56,8 +56,9 @@ api.interceptors.response.use(
         // Retry original request
         return api(originalRequest);
       } catch (refreshError) {
-        // Hard logout if refresh fails
-        window.location.replace("/auth/login");
+        if (!window.location.pathname === "/auth/login") {
+          window.location.replace("/auth/login");
+        }
         return Promise.reject(refreshError);
       }
     }
