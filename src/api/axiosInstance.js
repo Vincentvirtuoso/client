@@ -5,24 +5,38 @@ const API_BASE_URL =
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
+// Helper functions for token management
+const getAccessToken = () => localStorage.getItem("accessToken");
+const getRefreshToken = () => localStorage.getItem("refreshToken");
+const setAccessToken = (token) => localStorage.setItem("accessToken", token);
+const setRefreshToken = (token) => localStorage.setItem("refreshToken", token);
+const clearTokens = () => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+};
+
 /* =======================
    REQUEST INTERCEPTOR
 ======================= */
 api.interceptors.request.use(
-  (config) => config,
+  (config) => {
+    const token = getAccessToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
   (error) => Promise.reject(error)
 );
 
-api.interceptors.request.use((config) => {
-  console.log("🍪 Cookies:", document.cookie);
-  return config;
-});
+/* =======================
+   RESPONSE INTERCEPTOR
+======================= */
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -43,21 +57,33 @@ api.interceptors.response.use(
       status,
     };
 
-    /* 🔒 Prevent infinite refresh loop */
+    /* 🔒 Handle 401 - Token Expired */
     if (
       status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url.includes("/auth/refresh-token")
+      !originalRequest.url.includes("/auth/refresh-token") &&
+      getRefreshToken()
     ) {
       originalRequest._retry = true;
 
       try {
-        await api.post("/auth/refresh-token");
+        // Call refresh endpoint with refresh token
+        const response = await axios.post(
+          `${API_BASE_URL}/auth/refresh-token`,
+          {
+            refreshToken: getRefreshToken(),
+          }
+        );
 
-        // Retry original request
+        const { token } = response.data.data;
+        setAccessToken(token);
+
+        // Retry original request with new token
+        originalRequest.headers.Authorization = `Bearer ${token}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // FIX: Corrected the logic check
+        // Refresh failed - clear tokens and redirect to login
+        clearTokens();
         if (window.location.pathname !== "/auth/login") {
           window.location.replace("/auth/login");
         }
@@ -65,8 +91,18 @@ api.interceptors.response.use(
       }
     }
 
+    // If 401 and no refresh token, redirect to login
+    if (status === 401 && !getRefreshToken()) {
+      clearTokens();
+      if (window.location.pathname !== "/auth/login") {
+        window.location.replace("/auth/login");
+      }
+    }
+
     return Promise.reject(normalizedError);
   }
 );
 
+// Export token management functions for use in auth context
+export { getAccessToken, setAccessToken, setRefreshToken, clearTokens };
 export default api;
