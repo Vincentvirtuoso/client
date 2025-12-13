@@ -56,7 +56,8 @@ api.interceptors.response.use(
         // Retry original request
         return api(originalRequest);
       } catch (refreshError) {
-        if (!window.location.pathname === "/auth/login") {
+        // FIX: Corrected the logic check
+        if (window.location.pathname !== "/auth/login") {
           window.location.replace("/auth/login");
         }
         return Promise.reject(refreshError);
