@@ -61,7 +61,6 @@ const ProductDetail = () => {
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [activeTab, setActiveTab] = useState("description");
-  const [isWishlisted, setIsWishlisted] = useState(false);
 
   if (!product) {
     return (
@@ -116,36 +115,6 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
-      {/* <nav className="bg-white shadow-sm border-b border-gray-300 sticky top-16 z-20">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <button
-              onClick={() => navigate("/products")}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <LuArrowLeft className="w-5 h-5" />
-              Back to Products
-            </button>
-            <div className="flex items-center gap-4">
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <LuShare2 className="w-5 h-5 text-gray-600" />
-              </button>
-              <button
-                onClick={() => setIsWishlisted(!isWishlisted)}
-                className={`p-2 rounded-lg transition-colors ${
-                  isWishlisted
-                    ? "bg-red-50 text-red-600"
-                    : "hover:bg-gray-100 text-gray-600"
-                }`}
-              >
-                <LuHeart
-                  className={`w-5 h-5 ${isWishlisted ? "fill-current" : ""}`}
-                />
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav> */}
 
       <div className="px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
@@ -257,7 +226,7 @@ const ProductDetail = () => {
             )}
           </motion.div>
         </motion.div>
-        <motion.div variants={itemVariants} className="space-y-6">
+        <motion.div variants={itemVariants} className="space-y-6 mt-4">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-gray-500">
             <span>{product.category}</span>
@@ -363,7 +332,7 @@ const ProductDetail = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               disabled={!product.inStock}
-              className={`py-2 px-8 rounded-xl font-semibold text-lg border transition-colors ${
+              className={`py-2 px-8 rounded-xl font-semibold text-lg border transition-colors whitespace-nowrap ${
                 product.inStock
                   ? "btn-outline"
                   : "border-gray-300 text-gray-500 cursor-not-allowed"
@@ -405,12 +374,11 @@ const ProductDetail = () => {
           className="mt-16 bg-white rounded-2xl shadow-sm border border-gray-100"
         >
           <div className="border-b border-gray-200 overflow-x-auto overflow-y-hidden">
-            <nav className="grid grid-cols-4 -mb-px p-1 whitespace-nowrap">
+            <nav className="grid grid-cols-3 -mb-px p-1 whitespace-nowrap">
               {[
                 { id: "description", label: "Description" },
                 { id: "specifications", label: "Specifications" },
                 { id: "reviews", label: "Reviews" },
-                { id: "shipping", label: "Shipping & Returns" },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -557,61 +525,6 @@ const ProductDetail = () => {
                     <p className="text-red-700">
                       ⭐ This product is highly rated by customers
                     </p>
-                  </div>
-                </motion.div>
-              )}
-
-              {activeTab === "shipping" && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="space-y-6"
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-4">
-                        Shipping Information
-                      </h4>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <LuTruck className="w-5 h-5 text-green-600" />
-                          <div>
-                            <p className="font-medium">
-                              Free Standard Shipping
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              3-5 business days
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-4">
-                        Return Policy
-                      </h4>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3">
-                          <LuCheck className="w-5 h-5 text-purple-600" />
-                          <div>
-                            <p className="font-medium">30-Day Returns</p>
-                            <p className="text-sm text-gray-600">
-                              No questions asked
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <LuShield className="w-5 h-5 text-orange-600" />
-                          <div>
-                            <p className="font-medium">2-Year Warranty</p>
-                            <p className="text-sm text-gray-600">
-                              Manufacturer warranty
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </motion.div>
               )}

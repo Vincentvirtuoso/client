@@ -11,19 +11,21 @@ const api = axios.create({
   },
 });
 
-/* ===================== REQUEST INTERCEPTOR ===================== */
+/* =======================
+   REQUEST INTERCEPTOR
+======================= */
 api.interceptors.request.use(
   (config) => config,
   (error) => Promise.reject(error)
 );
 
-/* ===================== RESPONSE INTERCEPTOR ===================== */
+/* =======================
+   RESPONSE INTERCEPTOR
+======================= */
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-
-    // No response (network error)
+    // Network error (no response)
     if (!error.response) {
       return Promise.reject({
         message: "No response from server. Please check your connection.",
@@ -32,23 +34,30 @@ api.interceptors.response.use(
     }
 
     const { status, data } = error.response;
+    const originalRequest = error.config;
 
     const normalizedError = {
       message: data?.message || "An error occurred",
       code: data?.code,
       status,
-      ...data,
     };
 
-    if (status === 401 && !originalRequest._retry) {
+    /* 🔒 Prevent infinite refresh loop */
+    if (
+      status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/auth/refresh-token")
+    ) {
       originalRequest._retry = true;
 
       try {
         await api.post("/auth/refresh-token");
 
+        // Retry original request
         return api(originalRequest);
       } catch (refreshError) {
-        window.location.href = "/auth/login";
+        // Hard logout if refresh fails
+        window.location.replace("/auth/login");
         return Promise.reject(refreshError);
       }
     }

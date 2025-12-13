@@ -1,19 +1,22 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useState } from "react";
 
 export const useScreen = () => {
-  const [isMobile, setIsMobile] = useState(false);
+  const getSize = () => {
+    if (typeof window === "undefined") return "desktop";
 
-  const handleResize = () => {
-    setIsMobile(window.innerWidth < 768);
+    if (window.innerWidth < 768) return "mobile";
+    if (window.innerWidth < 1024) return "tablet";
+    return "desktop";
   };
 
+  const [screen, setScreen] = useState(getSize);
+
   useEffect(() => {
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    const handler = () => setScreen(getSize());
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
   }, []);
 
-  return { isMobile };
+  return { screen, isMobile: screen === "mobile" };
 };
