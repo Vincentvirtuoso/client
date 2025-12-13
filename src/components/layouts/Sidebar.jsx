@@ -1,30 +1,335 @@
 import React, { useEffect, useRef } from "react";
 import {
-  LuChevronDown,
+  LuChevronRight,
   LuHeart,
   LuLogOut,
   LuPackage,
-  LuRefreshCw,
   LuUser,
   LuX,
+  LuSettings,
+  LuBell,
 } from "react-icons/lu";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
+
+const UserSection = ({
+  loading = false,
+  user = null,
+  onSignIn = () => {},
+  onProfileClick = () => {},
+  customAvatar = null,
+  customSignInText = "Sign In / Register",
+  showProfileLink = true,
+  avatarBgFrom = "from-red-600",
+  avatarBgTo = "to-pink-500",
+  className = "",
+  sticky = true,
+  showBorder = true,
+}) => {
+  // Determine the user's initials for avatar
+  const getInitials = () => {
+    if (!user) return "?";
+    const names = user?.fullName?.trim().split(" ");
+    if (names.length === 1) return names[0].charAt(0).toUpperCase();
+    return (
+      names[0].charAt(0) + names[names.length - 1].charAt(0)
+    ).toUpperCase();
+  };
+
+  return (
+    <div
+      className={`
+        px-5 py-4 
+        ${showBorder ? "border-t border-gray-200" : ""}
+        bg-white 
+        ${sticky ? "sticky bottom-0" : ""}
+        ${className}
+      `}
+    >
+      {/* Loading State */}
+      {loading ? (
+        <div className="flex items-center gap-3 animate-pulse">
+          <div className="w-12 h-12 bg-gray-200 rounded-full" />
+          <div className="space-y-2">
+            <div className="h-4 w-24 bg-gray-200 rounded" />
+            <div className="h-3 w-20 bg-gray-200 rounded" />
+          </div>
+        </div>
+      ) : user ? (
+        // Authenticated User State
+        <button
+          onClick={onProfileClick}
+          className="w-full flex items-center gap-3 p-1 rounded-lg hover:bg-gray-50 transition-colors group focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          aria-label="View profile"
+        >
+          {/* Avatar */}
+          {customAvatar || (
+            <div
+              className={`
+                w-12 h-12 
+                bg-linear-to-br ${avatarBgFrom} ${avatarBgTo}
+                rounded-full 
+                flex items-center justify-center 
+                text-white font-semibold text-lg
+                shrink-0
+                ring-2 ring-white ring-offset-1
+                transition-transform group-hover:scale-105
+              `}
+            >
+              {getInitials()}
+            </div>
+          )}
+
+          {/* User Info */}
+          <div className="flex-1 min-w-0 text-left">
+            <p className="font-semibold text-gray-900 truncate group-hover:text-red-600 transition-colors">
+              {user?.fullName}
+            </p>
+            {showProfileLink && (
+              <p className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors">
+                View Profile
+              </p>
+            )}
+          </div>
+
+          {/* Optional Chevron Indicator */}
+          {showProfileLink && <LuChevronRight size={20} />}
+        </button>
+      ) : (
+        // Unauthenticated State - Sign In Button
+        <button
+          onClick={onSignIn}
+          className={`
+            w-full 
+            flex items-center justify-center gap-3 
+            px-4 py-3 
+            bg-linear-to-r from-red-600 to-pink-500
+            text-white 
+            rounded-lg 
+            hover:from-red-700 hover:to-pink-600
+            active:from-red-800 active:to-pink-700
+            transition-all duration-200
+            font-medium
+            focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
+            shadow-sm hover:shadow-md
+          `}
+          aria-label={customSignInText}
+        >
+          <LuUser className="w-5 h-5 shrink-0" />
+          <span>{customSignInText}</span>
+        </button>
+      )}
+    </div>
+  );
+};
+
+const UserMenu = ({
+  user = null,
+  wishlistCount = 0,
+  notificationsCount = 0,
+  onSignOut = () => {},
+  menuItems = [],
+  customItems = [],
+  className = "",
+  containerClassName = "",
+  showDivider = true,
+  variant = "default",
+  onItemClick = () => {},
+  loading = false,
+}) => {
+  // Style variants
+  const variants = {
+    default: {
+      link: "text-gray-700 hover:bg-red-50 hover:text-red-600",
+      button: "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+      active: "bg-red-50 text-red-600",
+      skeleton: "bg-gray-200",
+    },
+    minimal: {
+      link: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+      button: "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+      active: "bg-gray-100 text-gray-900",
+      skeleton: "bg-gray-200",
+    },
+    dark: {
+      link: "text-gray-300 hover:bg-gray-700 hover:text-white",
+      button: "text-gray-300 hover:bg-gray-700 hover:text-white",
+      active: "bg-gray-700 text-white",
+      skeleton: "bg-gray-600",
+    },
+  };
+
+  const currentVariant = variants[variant] || variants.default;
+
+  if (!user && !loading) return null;
+
+  if (loading) {
+    return (
+      <div
+        className={`
+          ${showDivider ? "border-t border-gray-200" : ""}
+          ${containerClassName}
+        `}
+      >
+        <div className={`px-4 py-3 space-y-2 ${className}`}>
+          {[...Array(5)].map((_, i) => (
+            <div
+              key={i}
+              className="
+                flex items-center gap-3
+                px-4 py-2.5
+                rounded-lg
+                animate-pulse
+              "
+            >
+              {/* Icon */}
+              <div className={`w-5 h-5 rounded ${currentVariant.skeleton}`} />
+
+              {/* Label */}
+              <div className={`h-4 w-32 rounded ${currentVariant.skeleton}`} />
+
+              {/* Badge */}
+              <div
+                className={`ml-auto h-5 w-8 rounded-full ${currentVariant.skeleton}`}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const defaultMenuItems = [
+    {
+      id: "orders",
+      label: "My Orders",
+      to: "/orders",
+      icon: <LuPackage className="w-5 h-5" />,
+      type: "link",
+    },
+    {
+      id: "wishlist",
+      label: "Wishlist",
+      to: "/wishlist",
+      icon: <LuHeart className="w-5 h-5" />,
+      count: wishlistCount,
+      type: "link",
+    },
+    {
+      id: "notifications",
+      label: "Notifications",
+      to: "/notifications",
+      icon: <LuBell className="w-5 h-5" />,
+      count: notificationsCount,
+      type: "link",
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      to: "/settings",
+      icon: <LuSettings className="w-5 h-5" />,
+      type: "link",
+    },
+  ];
+
+  const allMenuItems = [
+    ...(menuItems.length ? menuItems : defaultMenuItems),
+    ...customItems,
+    {
+      id: "signout",
+      label: "Sign Out",
+      icon: <LuLogOut className="w-5 h-5" />,
+      type: "button",
+      onClick: onSignOut,
+      className: "text-red-600 hover:bg-red-50",
+    },
+  ];
+
+  const renderCountBadge = (count) => {
+    if (!count || count <= 0) return null;
+
+    return (
+      <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full min-w-[1.25rem] h-5 flex items-center justify-center px-1.5">
+        {count > 99 ? "99+" : count}
+      </span>
+    );
+  };
+
+  /* =======================
+     RENDER MENU
+  ======================= */
+  return (
+    <div
+      className={`
+        ${showDivider ? "border-t border-gray-200" : ""}
+        ${containerClassName}
+      `}
+    >
+      <div className={`px-4 py-3 space-y-1 ${className}`}>
+        {allMenuItems.map((item) => {
+          const baseClasses = `
+            flex items-center gap-3
+            px-4 py-2.5
+            rounded-lg
+            transition-all duration-200
+            focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1
+            w-full text-left
+            ${item.className || ""}
+          `;
+
+          if (item.type === "button") {
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  item.onClick?.();
+                  onItemClick(item.id);
+                }}
+                className={`${baseClasses} ${currentVariant.button}`}
+              >
+                {item.icon}
+                <span className="flex-1">{item.label}</span>
+                {renderCountBadge(item.count)}
+              </button>
+            );
+          }
+
+          return (
+            <NavLink
+              key={item.id}
+              to={item.to}
+              className={({ isActive }) =>
+                `${baseClasses} ${
+                  isActive ? currentVariant.active : currentVariant.link
+                }`
+              }
+              onClick={() => onItemClick(item.id)}
+            >
+              {item.icon}
+              <span className="flex-1">{item.label}</span>
+              {renderCountBadge(item.count)}
+            </NavLink>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 const Sidebar = ({
   onClose,
-  userName = "Felix Vincent",
   onSignOut,
   wishlistCount = 6,
   promoBannerVisible,
 }) => {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const prevPathnameRef = useRef(pathname);
   const onSignIn = () => {
     window.location.href = "/auth";
   };
 
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   console.log(user);
 
   useEffect(() => {
@@ -105,62 +410,21 @@ const Sidebar = ({
           ))}
         </nav>
 
-        {/* Account Section */}
-        {user && (
-          <div className="px-4 py-4 border-t border-gray-200 space-y-2  overflow-y-auto">
-            <NavLink
-              to="/orders"
-              className="flex items-center gap-3 px-4 py-2 rounded-md text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
-            >
-              <LuPackage className="w-5 h-5" />
-              My Orders
-            </NavLink>
+        <UserMenu
+          user={user}
+          wishlistCount={wishlistCount}
+          notificationsCount={6}
+          onSignOut={onSignOut}
+          loading={loading}
+        />
 
-            <NavLink
-              to="/wishlist"
-              className="flex items-center gap-3 px-4 py-2 rounded-md text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
-            >
-              <LuHeart className="w-5 h-5" />
-              Wishlist
-              {wishlistCount > 0 && (
-                <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full px-2 py-1">
-                  {wishlistCount}
-                </span>
-              )}
-            </NavLink>
-
-            <button
-              onClick={onSignOut}
-              className="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors w-full"
-            >
-              <LuLogOut className="w-5 h-5" />
-              Sign Out
-            </button>
-          </div>
-        )}
-
-        {/* User Section */}
-        <div className="px-5 py-5 border-t border-gray-200 bg-white sticky bottom-0">
-          {user ? (
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
-                {userName.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900">{userName}</p>
-                <p className="text-sm text-gray-500">View Profile</p>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={onSignIn}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
-            >
-              <LuUser className="w-5 h-5" />
-              Sign In / Register
-            </button>
-          )}
-        </div>
+        <UserSection
+          loading={loading}
+          user={user}
+          userName={user?.name || "Guest"}
+          onSignIn={onSignIn}
+          onProfileClick={() => navigate("/profile")}
+        />
       </aside>
     </>
   );
