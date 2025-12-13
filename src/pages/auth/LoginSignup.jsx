@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import {
   LuEye,
   LuEyeOff,
@@ -17,6 +17,9 @@ import { Autoplay, EffectFade, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/effect-fade";
 import "swiper/css/pagination";
+import { useForm } from "../../hooks/useForm";
+import { useAuth } from "../../hooks/useAuth";
+import Spinner from "../../components/common/Spinner";
 
 const SocialButton = ({ children, onClick, className = "" }) => (
   <button
@@ -55,6 +58,25 @@ const slides = [
   },
 ];
 
+const initialValues = {
+  email: "",
+  password: "",
+  firstName: "",
+  lastName: "",
+  phoneNumber: "",
+};
+
+const validate = (form, isLogin = true) => {
+  if (!form.email || !form.password) return "Email and password are required.";
+  if (!/^[\w.+-]+@[\w-]+\.[\w.-]+$/.test(form.email))
+    return "Please enter a valid email address.";
+  if (form.password.length < 6)
+    return "Password must be at least 6 characters.";
+  if (!isLogin && (!form.firstName || !form.lastName || !form.phoneNumber))
+    return "Please provide your full name and phone number.";
+  return "";
+};
+
 const LoginSignup = ({ authState }) => {
   const mode =
     typeof authState === "string"
@@ -62,49 +84,66 @@ const LoginSignup = ({ authState }) => {
       : authState?.authState || authState?.from || "login";
   const isLogin = ["login", "sign-in", "signin"].includes(mode);
 
-  const [form, setForm] = useState({ email: "", password: "", name: "" });
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const navigate = useNavigate();
+  const { login, loading, register } = useAuth();
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const onSubmit = async (form) => {
+    try {
+      let result;
+      if (isLogin) {
+        result = await login(form);
+      } else {
+        result = await register(form);
+      }
 
-  const validate = () => {
-    if (!form.email || !form.password)
-      return "Email and password are required.";
-    if (!/^[\w.+-]+@[\w-]+\.[\w.-]+$/.test(form.email))
-      return "Please enter a valid email address.";
-    if (form.password.length < 6)
-      return "Password must be at least 6 characters.";
-    if (!isLogin && !form.name) return "Please provide your full name.";
-    return "";
+      if (!result) {
+        toast.error(error?.message || "An error occurred");
+        return;
+      }
+
+      if (!result.success) {
+        toast.error(result.message || "Operation failed");
+        return;
+      }
+
+      toast.success(
+        isLogin ? "Welcome back 👋" : "Account created successfully!"
+      );
+
+      if (isLogin) {
+        navigate("/");
+      } else {
+        navigate("/auth/verify-email-notice", {
+          state: {
+            autoSentEmail: true,
+            email: form.email,
+            expiresIn: result.expiresIn,
+          },
+        });
+      }
+    } catch (error) {
+      toast.error(error?.message);
+      if (isLogin && error?.code === "EMAIL_NOT_VERIFIED") {
+        navigate("/auth/verify-email-notice", { state: { email: form.email } });
+      }
+      console.log(error);
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    const validation = validate();
-    if (validation) return setError(validation);
-
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setLoading(false);
-
-    toast.success(
-      isLogin ? "Welcome back 👋" : "Account created successfully!"
-    );
-    navigate("/");
-  };
+  const { form, error, handleChange, handleSubmit } = useForm(
+    initialValues,
+    (f) => validate(f, isLogin),
+    onSubmit
+  );
 
   return (
     <div className="h-screen flex items-center justify-center bg-linear-to-br from-gray-50 to-gray-100 py-12 px-1">
-      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 h-screen overflow-hidden">
+      <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 h-screen overflow-hidden">
         {/* Left Side - Swiper Slideshow */}
         <div className="hidden lg:block h-screen">
-          <div className="h-full bg-white rounded-3xl shadow-2xl overflow-hidden">
+          <div className="h-full bg-white shadow-2xl overflow-hidden">
             <Swiper
               modules={[Autoplay, EffectFade, Pagination]}
               effect="fade"
@@ -145,35 +184,15 @@ const LoginSignup = ({ authState }) => {
                 );
               })}
             </Swiper>
-
-            {/* Trust indicators */}
-            <div className="absolute bottom-8 left-0 right-0 z-20 px-12">
-              <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg p-4">
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <div className="font-bold text-gray-900 text-xl">500K+</div>
-                    <div className="text-xs text-gray-600">Active Users</div>
-                  </div>
-                  <div>
-                    <div className="font-bold text-gray-900 text-xl">4.8★</div>
-                    <div className="text-xs text-gray-600">Customer Rating</div>
-                  </div>
-                  <div>
-                    <div className="font-bold text-gray-900 text-xl">24/7</div>
-                    <div className="text-xs text-gray-600">Support</div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Right Side - Form */}
-        <div className="flex h-screen overflow-y-auto w-full">
-          <div className="w-full max-w-md mx-auto">
+        <div className="flex h-screen overflow-y-auto w-full py-4">
+          <div className="w-full max-w-xl mx-auto">
             {/* Logo & Header */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-br from-orange-600 to-red-600 rounded-2xl mb-4">
                 <LuShoppingBag className="w-8 h-8 text-white" />
               </div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -211,18 +230,36 @@ const LoginSignup = ({ authState }) => {
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 {!isLogin && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Full Name
-                    </label>
-                    <input
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
-                      name="name"
-                      value={form.name}
-                      onChange={handleChange}
-                      placeholder="Jane Doe"
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        First Name
+                      </label>
+                      <input
+                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
+                        name="firstName"
+                        value={form.firstName}
+                        onChange={handleChange}
+                        placeholder="Jane"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Last Name
+                      </label>
+                      <input
+                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
+                        name="lastName"
+                        value={form.lastName}
+                        onChange={handleChange}
+                        placeholder="Doe"
+                      />
+                    </div>
+                    <NigerianPhoneInput
+                      form={form}
+                      handleChange={handleChange}
                     />
-                  </div>
+                  </>
                 )}
 
                 <div>
@@ -296,8 +333,10 @@ const LoginSignup = ({ authState }) => {
                 <button
                   type="submit"
                   className={`w-full bg-red-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all transform active:scale-[0.98] ${
-                    loading ? "opacity-70 cursor-wait" : ""
-                  }`}
+                    loading
+                      ? "bg-red-600/40 hover:bg-red-700/40 cursor-wait"
+                      : ""
+                  } flex gap-4 justify-center items-center`}
                   disabled={loading}
                 >
                   {loading
@@ -307,6 +346,8 @@ const LoginSignup = ({ authState }) => {
                     : isLogin
                     ? "Sign In"
                     : "Create Account"}
+
+                  {loading && <Spinner />}
                 </button>
               </form>
 
@@ -333,26 +374,6 @@ const LoginSignup = ({ authState }) => {
                   </>
                 )}
               </p>
-
-              {/* Trust badges */}
-              {!isLogin && (
-                <div className="pt-4 border-t border-gray-200">
-                  <div className="flex items-center justify-center gap-6 text-xs text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <LuShield className="w-4 h-4" />
-                      <span>Secure</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <LuHeadphones className="w-4 h-4" />
-                      <span>24/7 Support</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <LuStar className="w-4 h-4" />
-                      <span>Rated 4.8/5</span>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Terms */}
@@ -366,11 +387,118 @@ const LoginSignup = ({ authState }) => {
                 Privacy Policy
               </a>
             </p>
+            {/* Trust indicators */}
+            <div className="pt-6 z-20">
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg p-4">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="font-bold text-gray-900 text-xl">500K+</div>
+                    <div className="text-xs text-gray-600">Active Users</div>
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-900 text-xl">4.8★</div>
+                    <div className="text-xs text-gray-600">Customer Rating</div>
+                  </div>
+                  <div>
+                    <div className="font-bold text-gray-900 text-xl">24/7</div>
+                    <div className="text-xs text-gray-600">Support</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: "#333",
+            color: "#fff",
+            border: "#bbb",
+            zIndex: 9999,
+          },
+          success: { iconTheme: { primary: "#fb2c36", secondary: "#fff" } },
+          duration: 2000,
+        }}
+      />
     </div>
   );
 };
 
 export default LoginSignup;
+
+const NigerianPhoneInput = ({ form, handleChange }) => {
+  const [error, setError] = useState("");
+
+  const handlePhoneChange = (e) => {
+    let value = e.target.value.replace(/[^\d]/g, "");
+
+    // Convert +234 to 0
+    if (value.startsWith("234")) {
+      value = "0" + value.slice(3);
+    }
+
+    // Limit to 11 digits
+    if (value.length > 11) {
+      value = value.slice(0, 11);
+    }
+
+    // Format with spaces
+    let formattedValue = value;
+    if (value.length >= 4) {
+      formattedValue = value.slice(0, 4) + " " + value.slice(4);
+    }
+    if (value.length >= 8) {
+      formattedValue =
+        value.slice(0, 4) + " " + value.slice(4, 7) + " " + value.slice(7);
+    }
+
+    // Update form
+    const event = {
+      target: {
+        name: "phoneNumber",
+        value: formattedValue,
+      },
+    };
+    handleChange(event);
+
+    // Basic validation
+    if (
+      value.length === 11 &&
+      ["070", "080", "081", "090", "091"].some((prefix) =>
+        value.startsWith(prefix)
+      )
+    ) {
+      setError("");
+    } else if (value.length > 0) {
+      setError("Enter a valid 11-digit Nigerian number");
+    }
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Phone Number
+      </label>
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+          <span className="text-gray-500">+234</span>
+        </div>
+        <input
+          className={`w-full border ${
+            error ? "border-red-300" : "border-gray-300"
+          } rounded-lg px-4 py-3 pl-14 focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none`}
+          type="tel"
+          name="phoneNumber"
+          value={form.phoneNumber}
+          onChange={handlePhoneChange}
+          placeholder="0803 123 4567"
+          maxLength="14"
+        />
+      </div>
+      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+    </div>
+  );
+};

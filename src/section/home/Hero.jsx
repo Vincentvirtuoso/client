@@ -447,7 +447,7 @@ const Hero = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6, duration: 0.6 }}
-                    className="text-4xl md:text-7xl font-bold mb-6 leading-tight"
+                    className="text-4xl md:text-7xl font-bold mb-6 mt-4 leading-tight text-white"
                   >
                     {slides[currentSlide].title.split(" ").map((word, i) => (
                       <motion.span

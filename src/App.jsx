@@ -53,10 +53,10 @@ const App = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1">
+        <div className="flex-1 lg:ml-72">
           <Navbar promoBannerVisible={promoBannerVisible} />
           <main
-            className={`flex-1 lg:ml-72 transition-all ${
+            className={`flex-1  transition-all ${
               promoBannerVisible ? "pt-20" : "pt-19"
             }`}
           >
@@ -69,7 +69,12 @@ const App = () => {
         <Toaster
           position="top-right"
           toastOptions={{
-            style: { background: "#333", color: "#fff", border: "#bbb" },
+            style: {
+              background: "#333",
+              color: "#fff",
+              border: "#bbb",
+              zIndex: 9999,
+            },
             success: { iconTheme: { primary: "#fb2c36", secondary: "#fff" } },
             duration: 2000,
           }}

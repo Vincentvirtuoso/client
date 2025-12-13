@@ -8,18 +8,21 @@ import {
   LuX,
 } from "react-icons/lu";
 import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
 
 const Sidebar = ({
   onClose,
   userName = "Felix Vincent",
-  isAuthenticated = true,
-  onSignIn,
   onSignOut,
   wishlistCount = 6,
   promoBannerVisible,
 }) => {
   const { pathname } = useLocation();
   const prevPathnameRef = useRef(pathname);
+  const onSignIn = () => {
+    window.location.href = "/auth";
+  };
+  const { user } = useAuth();
 
   useEffect(() => {
     if (prevPathnameRef.current !== pathname) {
@@ -100,7 +103,7 @@ const Sidebar = ({
         </nav>
 
         {/* Account Section */}
-        {isAuthenticated && (
+        {user && (
           <div className="px-4 py-4 border-t border-gray-200 space-y-2  overflow-y-auto">
             <NavLink
               to="/orders"
@@ -135,7 +138,7 @@ const Sidebar = ({
 
         {/* User Section */}
         <div className="px-5 py-5 border-t border-gray-200 bg-white sticky bottom-0">
-          {isAuthenticated ? (
+          {user ? (
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold text-lg">
                 {userName.charAt(0).toUpperCase()}

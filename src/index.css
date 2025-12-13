@@ -4,9 +4,6 @@
   --font-sans: "Montserrat", "Poppins", "Tahoma", sans-serif;
 }
 
-/* -----------------------------------
-   🌐 Base Layer
------------------------------------ */
 @layer base {
   html {
     scroll-behavior: smooth;

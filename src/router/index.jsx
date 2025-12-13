@@ -14,6 +14,8 @@ import LoginSignup from "../pages/auth/LoginSignup";
 import Orders from "../pages/Orders";
 import SavedProducts from "../pages/SavedProducts";
 import OrderDetail from "../pages/OrderDetail";
+import VerifyEmail from "../pages/auth/VerifyEmail";
+import VerifyEmailNotice from "../pages/auth/VerifyEmailNotice";
 
 const router = createBrowserRouter([
   {
@@ -65,6 +67,8 @@ const router = createBrowserRouter([
       { index: true, element: <LoginSignup authState="login" /> },
       { path: "login", element: <LoginSignup authState="login" /> },
       { path: "register", element: <LoginSignup authState="register" /> },
+      { path: "verify-email-notice", element: <VerifyEmailNotice /> },
+      { path: "verify-email", element: <VerifyEmail /> },
     ],
   },
   {
