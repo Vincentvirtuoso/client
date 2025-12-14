@@ -1,6 +1,9 @@
 import { createContext, useState, useEffect } from "react";
 import { useApi } from "../hooks/useApi";
-import { setUnauthorizedLogoutHandler, setRefreshHandler } from "../api/api";
+import {
+  setUnauthorizedLogoutHandler,
+  setRefreshHandler,
+} from "../api/axiosInstance";
 
 export const AuthContext = createContext(null);
 
@@ -43,6 +46,8 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.log("Not authenticated or session expired");
+      console.log(err);
+
       setUser(null);
     } finally {
       setAuthLoading(false);
