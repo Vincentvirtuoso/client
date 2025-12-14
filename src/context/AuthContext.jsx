@@ -1,6 +1,6 @@
-// AuthContext.jsx
 import { createContext, useState, useEffect } from "react";
 import { useApi } from "../hooks/useApi";
+import { setUnauthorizedLogoutHandler, setRefreshHandler } from "../api/api";
 
 export const AuthContext = createContext(null);
 
@@ -9,6 +9,23 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+
+  // Connect axios interceptor handlers
+  useEffect(() => {
+    setUnauthorizedLogoutHandler(() => {
+      console.log("Unauthorized - logging out");
+      setUser(null);
+    });
+
+    setRefreshHandler(async () => {
+      console.log("Attempting token refresh...");
+      const data = await callApi("auth/refresh-token", "POST");
+      if (data?.data?.user) {
+        setUser(data.data.user);
+      }
+      return data;
+    });
+  }, [callApi]);
 
   // Initialize auth state on mount
   useEffect(() => {
@@ -19,8 +36,6 @@ export const AuthProvider = ({ children }) => {
   const initializeAuth = async () => {
     try {
       setAuthLoading(true);
-
-      // Check if user data exists in memory/storage
       const data = await callApi("auth/me", "GET");
 
       if (data?.user) {
@@ -28,8 +43,6 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.log("Not authenticated or session expired");
-      console.log(err);
-
       setUser(null);
     } finally {
       setAuthLoading(false);
@@ -82,12 +95,11 @@ export const AuthProvider = ({ children }) => {
   const refreshToken = async () => {
     try {
       const data = await callApi("auth/refresh-token", "POST");
-      if (data?.user) {
-        setUser(data.user);
+      if (data?.data?.user) {
+        setUser(data.data.user);
       }
       return data;
     } catch (err) {
-      // If refresh fails, logout
       setUser(null);
       throw err;
     }
@@ -99,7 +111,6 @@ export const AuthProvider = ({ children }) => {
       "GET"
     );
 
-    // Optionally update user if verification returns updated user data
     if (data?.user) {
       setUser(data.user);
     }
@@ -115,6 +126,7 @@ export const AuthProvider = ({ children }) => {
   const refreshUser = () => {
     setIsInitialized(false);
   };
+
   const updateUser = (userData) => {
     setUser((prev) => ({ ...prev, ...userData }));
   };
