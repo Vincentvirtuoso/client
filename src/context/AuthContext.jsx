@@ -40,7 +40,10 @@ export const AuthProvider = ({ children }) => {
   const initializeAuth = async () => {
     try {
       setAuthLoading(true);
-      const data = await axios.get("auth/me", { withCredentials: true });
+      const data = await axios.get(
+        `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}auth/me`,
+        { withCredentials: true }
+      );
 
       if (data?.user) {
         setUser(data.user);
