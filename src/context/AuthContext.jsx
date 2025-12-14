@@ -4,7 +4,6 @@ import {
   setUnauthorizedLogoutHandler,
   setRefreshHandler,
 } from "../api/axiosInstance";
-import axios from "axios";
 
 export const AuthContext = createContext(null);
 
@@ -33,19 +32,14 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize auth state on mount
   useEffect(() => {
-    // if (isInitialized) return;
+    if (isInitialized) return;
     initializeAuth();
   }, [isInitialized]);
 
   const initializeAuth = async () => {
     try {
       setAuthLoading(true);
-      const data = await axios.get(
-        `${
-          import.meta.env.VITE_API_URL || "http://localhost:5000/api"
-        }/auth/me`,
-        { withCredentials: true }
-      );
+      const data = await callApi("auth/me", "GET");
 
       if (data?.user) {
         setUser(data.user);
