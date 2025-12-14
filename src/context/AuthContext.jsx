@@ -4,6 +4,7 @@ import {
   setUnauthorizedLogoutHandler,
   setRefreshHandler,
 } from "../api/axiosInstance";
+import axios from "axios";
 
 export const AuthContext = createContext(null);
 
@@ -39,7 +40,7 @@ export const AuthProvider = ({ children }) => {
   const initializeAuth = async () => {
     try {
       setAuthLoading(true);
-      const data = await callApi("auth/me", "GET");
+      const data = await axios.get("auth/me", { withCredentials: true });
 
       if (data?.user) {
         setUser(data.user);
