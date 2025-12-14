@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize auth state on mount
   useEffect(() => {
-    if (isInitialized) return;
+    // if (isInitialized) return;
     initializeAuth();
   }, [isInitialized]);
 
