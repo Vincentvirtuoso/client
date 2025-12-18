@@ -17,17 +17,20 @@ import {
   LuCheck,
   LuChevronRight,
   LuChevronDown,
+  LuLogIn,
+  LuCircleHelp,
+  LuBell,
 } from "react-icons/lu";
 import { motion, AnimatePresence } from "framer-motion";
 import useBodyScrollLock from "../../hooks/useBodyScrollLock";
 import Sidebar from "./Sidebar";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import MobileSearchMenu from "../others/MobileSearchMenu";
+import { useAuth } from "../../hooks/useAuth";
 
 const Navbar = ({
-  wishlistCount = 2,
   isAuthenticated = true,
-  userName = "Guest",
+  // userName = "Guest",
   onCartClick,
   onSignIn,
   onSignOut,
@@ -42,6 +45,8 @@ const Navbar = ({
   const [scrolled, setScrolled] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
+
+  const { user } = useAuth();
 
   const categoryRef = useRef(null);
   const userMenuRef = useRef(null);
@@ -134,9 +139,10 @@ const Navbar = ({
     }
   };
 
-  const { items = [], openCart = () => {} } = useCart() || {};
+  const { items = [], openCart = () => {}, savedForLater } = useCart() || {};
 
   const cartCountValue = items?.length;
+  const wishlistCount = savedForLater?.length || 0;
 
   const handleSearchKeyPress = (e) => {
     if (e.key === "Enter") {
@@ -154,6 +160,7 @@ const Navbar = ({
 
   const MotionNavLink = motion(NavLink);
 
+  const userName = user?.fullName.split(" ")[0]?.charAt(0)?.toUpperCase();
   const { pathname } = useLocation();
   useEffect(() => {
     setUserMenuOpen(false);
@@ -485,7 +492,7 @@ const Navbar = ({
                     className="flex items-center gap-2 text-gray-700 hover:text-red-600 font-medium transition-colors p-2 rounded-lg hover:bg-gray-50 group"
                   >
                     <div className="w-8 h-8 bg-linear-to-br from-red-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-lg group-hover:shadow-xl transition-shadow">
-                      {userName.charAt(0).toUpperCase()}
+                      {userName || "Unnamed".charAt(0).toUpperCase()}
                     </div>
                     <LuChevronDown
                       className={`w-4 h-4 transition-transform duration-200 ${
@@ -499,61 +506,205 @@ const Navbar = ({
                       initial={{ opacity: 0, y: 8, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                      className="absolute right-0 mt-2 w-64 bg-white shadow-2xl rounded-xl border border-gray-100 pb-2 z-50"
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      className="absolute right-0 mt-2 w-72 bg-white shadow-xl rounded-xl border border-gray-200 pb-2 z-50 backdrop-blur-sm overflow-hidden"
+                      role="menu"
+                      aria-label="User menu"
                     >
-                      <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-red-50 to-pink-50 rounded-t-xl">
-                        <p className="text-sm font-semibold text-gray-900 truncate">
-                          {userName}
-                        </p>
-                        <p className="text-xs text-gray-500 truncate">
-                          user@email.com
-                        </p>
-                      </div>
-
-                      {[
-                        { icon: User, label: "My Profile", href: "/profile" },
-                        {
-                          icon: Package,
-                          label: "My Orders",
-                          href: "/orders",
-                          badge: 4,
-                        },
-                        {
-                          icon: Heart,
-                          label: "Wishlist",
-                          href: "/wishlist",
-                          badge: wishlistCount,
-                        },
-                        {
-                          icon: Settings,
-                          label: "Settings",
-                          href: "/settings",
-                        },
-                      ].map((item, index) => (
-                        <NavLink
-                          key={index}
-                          to={item.href}
-                          className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors group"
-                        >
-                          <item.icon className="w-4 h-4 text-gray-400 group-hover:text-red-500" />
-                          <span className="flex-1">{item.label}</span>
-                          {item.badge > 0 && (
-                            <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                              {item.badge}
-                            </span>
+                      {/* User Info Section */}
+                      <div className="px-4 py-3 border-b border-gray-100 bg-linear-to-r from-red-50/80 to-pink-50/80 rounded-t-xl">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">
+                              {user?.fullName || "Unnamed"}
+                            </p>
+                            <p className="text-xs text-gray-600 truncate mt-0.5">
+                              {user?.email || "user@email.com"}
+                            </p>
+                          </div>
+                          {user?.profileImages ? (
+                            <div className="w-8 h-8 rounded-full bg-linear-to-r from-red-100 to-pink-100 border border-red-200 overflow-hidden">
+                              <img
+                                src={user.profileImage}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-linear-to-r from-red-100 to-pink-100 border border-red-200 flex items-center justify-center">
+                              <span className="text-xs font-semibold text-red-600">
+                                {(user?.fullName?.[0] || "U").toUpperCase()}
+                              </span>
+                            </div>
                           )}
-                        </NavLink>
-                      ))}
+                        </div>
 
-                      <div className="border-t border-gray-100 mt-2 pt-2">
-                        <button
-                          onClick={onSignOut}
-                          className="flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 transition-colors w-full group"
-                        >
-                          <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                          <span>Sign Out</span>
-                        </button>
+                        {/* Login reminder - only show if needed */}
+                        {user?.needsReauth && (
+                          <div className="mt-2 flex items-center gap-1.5">
+                            <AlertCircle className="w-3 h-3 text-amber-600" />
+                            <p className="text-xs text-amber-600 font-medium">
+                              Please login again
+                            </p>
+                          </div>
+                        )}
                       </div>
+
+                      {/* Menu Items */}
+                      <div className="py-1">
+                        {user ? (
+                          <>
+                            {[
+                              {
+                                icon: User,
+                                label: "My Profile",
+                                href: "/profile",
+                                badge: null,
+                                description: "View and edit your profile",
+                              },
+                              {
+                                icon: Package,
+                                label: "My Orders",
+                                href: "/orders",
+                                badge: 4,
+                                description: "Track and manage orders",
+                              },
+                              {
+                                icon: Heart,
+                                label: "Wishlist",
+                                href: "/wishlist",
+                                badge: wishlistCount > 0 ? wishlistCount : null,
+                                description: "Your saved items",
+                              },
+                              {
+                                icon: LuBell,
+                                label: "Notifications",
+                                href: "/notifications",
+                                badge: 20,
+                                description: "Your latest alerts",
+                              },
+                              {
+                                icon: Settings,
+                                label: "Settings",
+                                href: "/settings",
+                                badge: null,
+                                description: "Account preferences",
+                              },
+                              {
+                                icon: LuCircleHelp,
+                                label: "Help & Support",
+                                href: "/support",
+                                badge: null,
+                                description: "Get assistance",
+                              },
+                            ].map((item, index) => {
+                              const Icon = item.icon;
+                              const hasBadge =
+                                item.badge != null && item.badge > 0;
+
+                              return (
+                                <NavLink
+                                  key={`nav-item-${index}`}
+                                  to={item.href}
+                                  className={({ isActive }) => `
+                flex items-center gap-3 px-4 py-2.5
+                transition-all duration-200
+                group relative
+                hover:bg-gray-50 active:bg-gray-100
+                ${
+                  isActive
+                    ? "bg-red-50 text-red-700 border-l-2 border-l-red-500 "
+                    : "text-gray-700"
+                }
+              `}
+                                  end={item.href === "/profile"}
+                                  aria-current={({ isActive }) =>
+                                    isActive ? "page" : undefined
+                                  }
+                                  role="menuitem"
+                                >
+                                  <div className="relative">
+                                    <Icon
+                                      className={`
+                    w-5 h-5 transition-colors duration-200
+                  `}
+                                      aria-hidden="true"
+                                    />
+                                  </div>
+
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm font-medium truncate">
+                                        {item.label}
+                                      </span>
+                                      {hasBadge && (
+                                        <span className="bg-red-500 text-white text-xs font-semibold px-1.5 py-0.5 rounded-full min-w-5 h-5 flex items-center justify-center animate-pulse animate-duration-1000">
+                                          {item.badge > 99 ? "99+" : item.badge}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-gray-500 truncate hidden group-hover:block transition-all duration-200">
+                                      {item.description}
+                                    </p>
+                                  </div>
+
+                                  {!hasBadge && (
+                                    <LuChevronRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-all duration-200 group-hover:translate-x-0.5" />
+                                  )}
+                                </NavLink>
+                              );
+                            })}
+                          </>
+                        ) : (
+                          <div className="p-4 text-center">
+                            <div className="w-12 h-12 rounded-full bg-linear-to-r from-red-50 to-pink-50 border-2 border-red-100 flex items-center justify-center mx-auto mb-3">
+                              <User className="w-6 h-6 text-red-400" />
+                            </div>
+                            <p className="text-gray-700 text-sm mb-3 font-medium">
+                              Sign in to access your account
+                            </p>
+                            <p className="text-gray-500 text-xs mb-4">
+                              Manage orders, wishlist, and preferences
+                            </p>
+                            <NavLink
+                              to="/auth/login"
+                              className="
+            inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-linear-to-r from-red-600 to-pink-600 text-white text-sm font-medium rounded-lg hover:from-red-700 hover:to-pink-700 transition-all duration-200 active:scale-95 w-full shadow-sm hover:shadow
+          "
+                              role="menuitem"
+                            >
+                              <LuLogIn className="w-4 h-4" />
+                              Sign In
+                            </NavLink>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Sign Out Section */}
+                      {user && (
+                        <div className="border-t border-gray-100 pt-1 mt-1">
+                          <button
+                            onClick={onSignOut}
+                            className="
+          flex items-center justify-between px-4 py-3
+          text-gray-700 hover:text-red-600 hover:bg-red-50
+          transition-all duration-200 active:bg-red-100
+          w-full group rounded-md mx-1
+        "
+                            role="menuitem"
+                            aria-label="Sign out"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-5 h-5 flex items-center justify-center">
+                                <LogOut className="w-4 h-4 transition-transform group-hover:scale-110 group-hover:-translate-x-0.5" />
+                              </div>
+                              <span className="text-sm font-medium">
+                                Sign Out
+                              </span>
+                            </div>
+                          </button>
+                        </div>
+                      )}
                     </motion.div>
                   )}
                 </div>

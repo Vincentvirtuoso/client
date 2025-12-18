@@ -126,16 +126,6 @@ const StatCard = ({
     },
   };
 
-  const hoverVariants = enableHover
-    ? {
-        hover: {
-          scale: 1.05,
-          y: -5,
-          transition: { duration: 0.2 },
-        },
-      }
-    : {};
-
   const iconVariants = enableIconAnimation
     ? {
         hover: {
@@ -231,17 +221,6 @@ const StatCard = ({
       {renderContent()}
     </motion.div>
   );
-};
-
-// Default props for convenience
-StatCard.defaultProps = {
-  theme: "default",
-  size: "md",
-  alignment: "center",
-  enableHover: true,
-  enableStagger: true,
-  enableIconAnimation: true,
-  showBackgroundEffect: true,
 };
 
 export default StatCard;

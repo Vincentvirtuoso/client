@@ -74,14 +74,14 @@ const CategoriesSection = () => {
         </motion.button>
       </motion.div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
         {categories.map((category, index) => (
           <StatCard
             key={index}
             {...category}
-            subtitle={category.count}
+            title={category.name}
+            value={category.count}
             enableHover
-            size="lg"
             showBackgroundEffect
             enableIconAnimation
           />
@@ -174,7 +174,7 @@ const StatsSection = () => {
 const Home = () => {
   return (
     <div className="min-h-screen bg-linear-to-b from-gray-50 to-white">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="px-4 sm:px-6 lg:px-8 py-8">
         <Hero />
         <FeaturesSection />
         <CategoriesSection />
