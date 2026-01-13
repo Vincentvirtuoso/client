@@ -172,7 +172,7 @@ const UserMenu = ({
         `}
       >
         <div className={`px-4 py-3 space-y-2 ${className}`}>
-          {[...Array(5)].map((_, i) => (
+          {[...Array(4)].map((_, i) => (
             <div
               key={i}
               className="
