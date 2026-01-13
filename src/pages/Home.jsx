@@ -1,28 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LuShoppingCart,
   LuChevronRight,
   LuChevronLeft,
   LuStar,
-  LuTruck,
-  LuShield,
-  LuRefreshCw,
   LuArrowRight,
   LuClock,
   LuPackage,
   LuAward,
 } from "react-icons/lu";
+import FeaturesSection from "../section/home/FeaturesSection";
+import NewsletterSection from "../section/home/NewsletterSection";
+import products from "../data/products";
+import ProductCard from "../components/common/ProductCard";
+import { useNavigate } from "react-router-dom";
+import CategorySection from "../section/home/CategorySection";
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [cartCount, setCartCount] = useState(0);
   const [countdown, setCountdown] = useState({
     hours: 23,
     minutes: 45,
     seconds: 30,
   });
   const [isPaused, setIsPaused] = useState(false);
+  const navigate = useNavigate();
 
   const heroSlides = [
     {
@@ -101,63 +103,6 @@ export default function Home() {
     { name: "Books", icon: "📚", count: "4k+" },
   ];
 
-  const featuredProducts = [
-    {
-      id: 1,
-      name: "Wireless Headphones",
-      price: 129.99,
-      rating: 4.8,
-      image:
-        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
-      tag: "Bestseller",
-    },
-    {
-      id: 2,
-      name: "Smart Watch Pro",
-      price: 299.99,
-      rating: 4.9,
-      image:
-        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop",
-      tag: "New",
-    },
-    {
-      id: 3,
-      name: "Designer Backpack",
-      price: 89.99,
-      rating: 4.7,
-      image:
-        "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop",
-      tag: "Sale",
-    },
-    {
-      id: 4,
-      name: "Premium Sunglasses",
-      price: 159.99,
-      rating: 4.6,
-      image:
-        "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=400&fit=crop",
-      tag: "Trending",
-    },
-  ];
-
-  const features = [
-    {
-      icon: <LuTruck className="w-8 h-8" />,
-      title: "Free Shipping",
-      desc: "On orders over $50",
-    },
-    {
-      icon: <LuShield className="w-8 h-8" />,
-      title: "Secure Payment",
-      desc: "100% protected",
-    },
-    {
-      icon: <LuRefreshCw className="w-8 h-8" />,
-      title: "Easy Returns",
-      desc: "30-day guarantee",
-    },
-  ];
-
   useEffect(() => {
     if (isPaused) return;
     const timer = setInterval(() => {
@@ -181,10 +126,6 @@ export default function Home() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
-
-  const addToCart = () => {
-    setCartCount((prev) => prev + 1);
-  };
 
   const renderSlideContent = (slide) => {
     const baseContent = (
@@ -454,31 +395,13 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="py-12 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {features.map((feature, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                className="flex items-center space-x-4 p-4"
-              >
-                <div className="text-red-500">{feature.icon}</div>
-                <div>
-                  <h3 className="font-semibold text-lg">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.desc}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+      <section className="py-8 px-4">
+        <FeaturesSection />
       </section>
 
       {/* Categories */}
-      <section className="py-16 container mx-auto px-4">
+      <CategorySection />
+      {/* <section className="py-16 container mx-auto px-4">
         <motion.h2
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -504,7 +427,7 @@ export default function Home() {
             </motion.div>
           ))}
         </div>
-      </section>
+      </section> */}
 
       {/* Featured Products */}
       <section className="py-16 bg-gray-100">
@@ -521,91 +444,23 @@ export default function Home() {
             <motion.button
               whileHover={{ x: 5 }}
               className="text-red-500 font-semibold flex items-center gap-2"
+              onClick={() => navigate("/products")}
             >
               View All <LuChevronRight />
             </motion.button>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.map((product, idx) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                whileHover={{ y: -10 }}
-                className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow"
-              >
-                <div className="relative">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-64 object-cover"
-                  />
-                  <span className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                    {product.tag}
-                  </span>
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                  <div className="flex items-center mb-3">
-                    <LuStar className="text-yellow-400 fill-current" />
-                    <span className="ml-1 text-sm text-gray-600">
-                      {product.rating}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-red-500">
-                      ${product.price}
-                    </span>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={addToCart}
-                      className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-colors"
-                    >
-                      <LuShoppingCart className="w-5 h-5" />
-                    </motion.button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
+            {products
+              .filter((p) => p.isFeatured)
+              .map((product) => (
+                <ProductCard product={{ ...product }} />
+              ))}
           </div>
         </div>
       </section>
 
-      {/* Newsletter */}
-      <section className="py-16 bg-red-500">
-        <div className="container mx-auto px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Subscribe to Our Newsletter
-            </h2>
-            <p className="text-white text-lg mb-8">
-              Get the latest updates on new products and upcoming sales
-            </p>
-            <div className="max-w-md mx-auto flex gap-2">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-300"
-              />
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-white text-red-500 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-              >
-                Subscribe
-              </motion.button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      <NewsletterSection />
     </div>
   );
 }

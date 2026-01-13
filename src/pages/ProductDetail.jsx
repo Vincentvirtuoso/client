@@ -1,17 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LuStar,
   LuStarHalf,
-  LuShoppingCart,
-  LuHeart,
-  LuShare2,
   LuTruck,
   LuShield,
-  LuArrowLeft,
   LuCheck,
-  LuPlus,
-  LuMinus,
   LuChevronLeft,
   LuChevronRight,
   LuClock,
@@ -19,9 +13,13 @@ import {
   LuSparkles,
 } from "react-icons/lu";
 import { useParams, useNavigate } from "react-router-dom";
-import products from "../data/products";
 import CartQuantityUpdater from "../components/common/CartQuantityUpdater";
 import ProductImage from "../components/ui/ProductImage";
+import { useProduct } from "../hooks/useProduct";
+import {
+  ProductDetailError,
+  ProductDetailSkeleton,
+} from "../components/skeleton/ProductDetailSkeleton";
 
 const StarRating = ({ rating, size = "md" }) => {
   const stars = [];
@@ -57,37 +55,41 @@ const StarRating = ({ rating, size = "md" }) => {
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const product = products.find((p) => p.id === parseInt(id));
+  const { getProductById, loading, error } = useProduct();
 
+  const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [activeTab, setActiveTab] = useState("description");
 
-  if (!product) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Product Not Found
-          </h2>
-          <button
-            onClick={() => navigate("/products")}
-            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Back to Products
-          </button>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (id) {
+        try {
+          const res = await getProductById(id);
+          if (res && res.data) {
+            setProduct(res.data);
+          }
+        } catch (err) {
+          console.error("Error fetching product:", err);
+        }
+      }
+    };
+
+    fetchProduct();
+  }, [id, getProductById]);
 
   const nextImage = () => {
-    setSelectedImage((prev) => (prev + 1) % product.images.length);
+    if (product?.images) {
+      setSelectedImage((prev) => (prev + 1) % product.images.length);
+    }
   };
 
   const prevImage = () => {
-    setSelectedImage(
-      (prev) => (prev - 1 + product.images.length) % product.images.length
-    );
+    if (product?.images) {
+      setSelectedImage(
+        (prev) => (prev - 1 + product.images.length) % product.images.length
+      );
+    }
   };
 
   const containerVariants = {
@@ -112,10 +114,35 @@ const ProductDetail = () => {
     },
   };
 
+  if (loading) {
+    return <ProductDetailSkeleton />;
+  }
+
+  if (error || !product) {
+    return (
+      <ProductDetailError
+        error={error}
+        onRetry={() => getProductById(id)}
+        onGoBack={() => navigate("/products")}
+      />
+    );
+  }
+
+  // Calculate discount percentage
+  const discount = product.originalPrice
+    ? Math.round(
+        ((product.originalPrice - product.price) / product.originalPrice) * 100
+      )
+    : 0;
+
+  // Check if product is in stock
+  const inStock =
+    product.inStock || product.availabilityType !== "out-of-stock";
+  const stockCount = product.stockCount || 0;
+  const isLimitedStock = stockCount > 0 && stockCount <= 10;
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-
       <div className="px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
           variants={containerVariants}
@@ -128,12 +155,14 @@ const ProductDetail = () => {
             {/* Main Image */}
             <div className="relative rounded-2xl shadow-sm border border-gray-100 overflow-hidden aspect-square flex items-center justify-center">
               <div className="w-full h-full relative">
-                <ProductImage
-                  key={selectedImage}
-                  src={product.images[selectedImage]}
-                  alt={product.name}
-                  size={"full"}
-                />
+                {product.images && product.images[selectedImage] && (
+                  <ProductImage
+                    key={selectedImage}
+                    src={product.images[selectedImage]}
+                    alt={product.name}
+                    size={"full"}
+                  />
+                )}
                 <AnimatePresence mode="wait">
                   <motion.div
                     initial={{ opacity: 0 }}
@@ -147,7 +176,7 @@ const ProductDetail = () => {
               </div>
 
               {/* Navigation Arrows */}
-              {product.images.length > 1 && (
+              {product.images && product.images.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
@@ -177,7 +206,7 @@ const ProductDetail = () => {
                     Best Seller
                   </motion.span>
                 )}
-                {product.isNew && (
+                {product.isNewArrival && (
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
@@ -188,21 +217,21 @@ const ProductDetail = () => {
                     New Arrival
                   </motion.span>
                 )}
-                {product.discount > 0 && (
+                {discount > 0 && (
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.7 }}
                     className="px-3 py-1 bg-red-500 text-white text-sm font-medium rounded-full"
                   >
-                    {product.discount}% OFF
+                    {discount}% OFF
                   </motion.span>
                 )}
               </div>
             </div>
 
             {/* Thumbnail Gallery */}
-            {product.images.length > 1 && (
+            {product.images && product.images.length > 1 && (
               <div className="grid grid-cols-4 gap-3">
                 {product.images.map((image, index) => (
                   <button
@@ -225,147 +254,165 @@ const ProductDetail = () => {
               </div>
             )}
           </motion.div>
-        </motion.div>
-        <motion.div variants={itemVariants} className="space-y-6 mt-4">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span>{product.category}</span>
-            <span>•</span>
-            <span>{product.subCategory}</span>
-            <span>•</span>
-            <span className="text-gray-900">{product.brand}</span>
-          </div>
 
-          {/* Title and Brand */}
-          <div>
-            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-              {product.name}
-            </h1>
-            <p className="text-lg text-gray-600">by {product.brand}</p>
-          </div>
+          {/* Product Information */}
+          <motion.div variants={itemVariants} className="space-y-6">
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <span>{product.category}</span>
+              <span>•</span>
+              <span>{product.subCategory || "Uncategorized"}</span>
+              <span>•</span>
+              <span className="text-gray-900">{product.brand}</span>
+            </div>
 
-          {/* Rating and Reviews */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <StarRating rating={product.rating} size="lg" />
-              <span className="text-lg font-semibold text-gray-900">
-                {product.rating}
+            {/* Title and Brand */}
+            <div>
+              <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+                {product.name}
+              </h1>
+              <p className="text-lg text-gray-600">by {product.brand}</p>
+            </div>
+
+            {/* Rating and Reviews */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <StarRating rating={product.rating || 0} size="lg" />
+                <span className="text-lg font-semibold text-gray-900">
+                  {product.rating?.toFixed(1) || "0.0"}
+                </span>
+              </div>
+              <span className="text-gray-500">•</span>
+              <span className="text-gray-600">
+                {product.reviewCount || 0} reviews
               </span>
             </div>
-            <span className="text-gray-500">•</span>
-            <span className="text-gray-600">{product.reviewCount} reviews</span>
-          </div>
 
-          {/* Price Section */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-4xl font-bold text-gray-900">
-                ₦{product.price.toLocaleString()}
-              </span>
-              {product.originalPrice > product.price && (
+            {/* Price Section */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-4xl font-bold text-gray-900">
+                  ₦{product.price?.toLocaleString() || "0"}
+                </span>
+                {product.originalPrice > product.price && (
+                  <>
+                    <span className="text-2xl text-gray-500 line-through">
+                      ₦{product.originalPrice.toLocaleString()}
+                    </span>
+                    <span className="px-2 py-1 bg-red-100 text-red-700 font-medium rounded-lg">
+                      Save ₦
+                      {(product.originalPrice - product.price).toLocaleString()}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Stock Status */}
+            <div
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
+                inStock
+                  ? isLimitedStock
+                    ? "bg-orange-100 text-orange-700"
+                    : "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {inStock ? (
                 <>
-                  <span className="text-2xl text-gray-500 line-through">
-                    ₦{product.originalPrice.toLocaleString()}
-                  </span>
-                  <span className="px-2 py-1 bg-red-100 text-red-700 font-medium rounded-lg">
-                    Save ₦
-                    {(product.originalPrice - product.price).toLocaleString()}
-                  </span>
+                  <LuCheck className="w-4 h-4" />
+                  {isLimitedStock ? (
+                    <span>Only {stockCount} left in stock</span>
+                  ) : (
+                    <span>In Stock</span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <LuClock className="w-4 h-4" />
+                  <span>Out of Stock</span>
                 </>
               )}
             </div>
-            {product.discount > 0 && (
-              <p className="text-green-600 font-medium">
-                {product.discount}% discount applied
-              </p>
+
+            {/* Description */}
+            <p className="text-lg text-gray-700 leading-relaxed">
+              {product.description}
+            </p>
+
+            {/* Tags */}
+            {product.tags && product.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {product.tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
             )}
-          </div>
 
-          {/* Stock Status */}
-          <div
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
-              product.inStock
-                ? product.availabilityType === "limited"
-                  ? "bg-orange-100 text-orange-700"
-                  : "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {product.inStock ? (
-              <>
-                <LuCheck className="w-4 h-4" />
-                {product.availabilityType === "limited" ? (
-                  <span>Only {product.stockCount} left in stock</span>
-                ) : (
-                  <span>In Stock</span>
-                )}
-              </>
-            ) : (
-              <>
-                <LuClock className="w-4 h-4" />
-                <span>Out of Stock</span>
-              </>
+            {/* Features */}
+            {product.features && product.features.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="font-semibold text-gray-900">Key Features:</h3>
+                <ul className="space-y-1">
+                  {product.features.map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2">
+                      <LuCheck className="w-4 h-4 text-green-500" />
+                      <span className="text-gray-700">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
-          </div>
 
-          {/* Description */}
-          <p className="text-lg text-gray-700 leading-relaxed">
-            {product.description}
-          </p>
-
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2">
-            {product.tags.map((tag, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <CartQuantityUpdater product={product} textSize={"lg"} />
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                disabled={!inStock}
+                className={`py-2 px-8 rounded-xl font-semibold text-lg border transition-colors whitespace-nowrap ${
+                  inStock
+                    ? "btn-outline"
+                    : "border-gray-300 text-gray-500 cursor-not-allowed"
+                }`}
               >
-                {tag}
-              </span>
-            ))}
-          </div>
+                Buy Now
+              </motion.button>
+            </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <CartQuantityUpdater product={product} textSize={"lg"} />
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              disabled={!product.inStock}
-              className={`py-2 px-8 rounded-xl font-semibold text-lg border transition-colors whitespace-nowrap ${
-                product.inStock
-                  ? "btn-outline"
-                  : "border-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              Buy Now
-            </motion.button>
-          </div>
-
-          {/* Features */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-gray-200">
-            <div className="flex items-center gap-3 text-gray-600">
-              <LuTruck className="w-5 h-5 text-green-600 shrink-0" />
-              <div>
-                <p className="font-medium">Free Shipping</p>
-                <p className="text-sm">On orders over ₦100</p>
+            {/* Shipping & Warranty Info */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-gray-200">
+              <div className="flex items-center gap-3 text-gray-600">
+                <LuTruck className="w-5 h-5 text-green-600 shrink-0" />
+                <div>
+                  <p className="font-medium">Free Shipping</p>
+                  <p className="text-sm">On orders over ₦100</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-gray-600">
+                <LuShield className="w-5 h-5 text-red-600 shrink-0" />
+                <div>
+                  <p className="font-medium">
+                    {product.specifications?.warranty || "2-Year"} Warranty
+                  </p>
+                  <p className="text-sm">Full protection</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 text-gray-600">
+                <LuCheck className="w-5 h-5 text-purple-600 shrink-0" />
+                <div>
+                  <p className="font-medium">30-Day Returns</p>
+                  <p className="text-sm">No questions asked</p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-3 text-gray-600">
-              <LuShield className="w-5 h-5 text-red-600 shrink-0" />
-              <div>
-                <p className="font-medium">2-Year Warranty</p>
-                <p className="text-sm">Full protection</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 text-gray-600">
-              <LuCheck className="w-5 h-5 text-purple-600 shrink-0" />
-              <div>
-                <p className="font-medium">30-Day Returns</p>
-                <p className="text-sm">No questions asked</p>
-              </div>
-            </div>
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Additional Information Tabs */}
@@ -413,12 +460,14 @@ const ProductDetail = () => {
                         Key Features
                       </h4>
                       <ul className="space-y-2 text-gray-700">
-                        {product.tags.map((tag, index) => (
-                          <li key={index} className="flex items-center gap-2">
-                            <LuCheck className="w-4 h-4 text-green-500" />
-                            {tag.charAt(0).toUpperCase() + tag.slice(1)}
-                          </li>
-                        ))}
+                        {(product.features || product.tags || []).map(
+                          (item, index) => (
+                            <li key={index} className="flex items-center gap-2">
+                              <LuCheck className="w-4 h-4 text-green-500" />
+                              {item.charAt(0).toUpperCase() + item.slice(1)}
+                            </li>
+                          )
+                        )}
                       </ul>
                     </div>
                     <div>
@@ -436,12 +485,15 @@ const ProductDetail = () => {
                         </div>
                         <div className="flex justify-between">
                           <dt className="text-gray-600">Subcategory</dt>
-                          <dd className="font-medium">{product.subCategory}</dd>
+                          <dd className="font-medium">
+                            {product.subCategory || "N/A"}
+                          </dd>
                         </div>
                         <div className="flex justify-between">
                           <dt className="text-gray-600">SKU</dt>
                           <dd className="font-medium">
-                            PROD-{product.id.toString().padStart(4, "0")}
+                            {product.sku ||
+                              `PROD-${product._id?.slice(-6) || "000000"}`}
                           </dd>
                         </div>
                       </dl>
@@ -473,31 +525,55 @@ const ProductDetail = () => {
                       <div className="flex justify-between py-2 border-b border-gray-100">
                         <dt className="text-gray-600">Availability</dt>
                         <dd className="font-medium">
-                          {product.inStock ? "In Stock" : "Out of Stock"}
+                          {inStock ? "In Stock" : "Out of Stock"}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <dt className="text-gray-600">Unit</dt>
+                        <dd className="font-medium">
+                          {product.unit || "Piece"}
                         </dd>
                       </div>
                     </dl>
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-900 mb-4">
-                      Pricing & Reviews
+                      Technical Details
                     </h4>
                     <dl className="space-y-3">
+                      {product.specifications &&
+                        typeof product.specifications === "object" && (
+                          <>
+                            {Object.entries(product.specifications).map(
+                              ([key, value]) =>
+                                value && (
+                                  <div
+                                    key={key}
+                                    className="flex justify-between py-2 border-b border-gray-100"
+                                  >
+                                    <dt className="text-gray-600 capitalize">
+                                      {key.replace(/([A-Z])/g, " $1").trim()}
+                                    </dt>
+                                    <dd className="font-medium">{value}</dd>
+                                  </div>
+                                )
+                            )}
+                          </>
+                        )}
                       <div className="flex justify-between py-2 border-b border-gray-100">
-                        <dt className="text-gray-600">Original Price</dt>
+                        <dt className="text-gray-600">Weight</dt>
                         <dd className="font-medium">
-                          ₦{product.originalPrice.toLocaleString()}
+                          {product.weight?.value} {product.weight?.unit}
                         </dd>
                       </div>
                       <div className="flex justify-between py-2 border-b border-gray-100">
-                        <dt className="text-gray-600">Current Price</dt>
-                        <dd className="font-medium text-green-600">
-                          ₦{product.price.toLocaleString()}
+                        <dt className="text-gray-600">Dimensions</dt>
+                        <dd className="font-medium">
+                          {product.dimensions?.length}×
+                          {product.dimensions?.width}×
+                          {product.dimensions?.height}{" "}
+                          {product.dimensions?.unit}
                         </dd>
-                      </div>
-                      <div className="flex justify-between py-2 border-b border-gray-100">
-                        <dt className="text-gray-600">Rating</dt>
-                        <dd className="font-medium">{product.rating} / 5.0</dd>
                       </div>
                     </dl>
                   </div>
@@ -512,18 +588,23 @@ const ProductDetail = () => {
                   className="space-y-6 flex flex-col items-center"
                 >
                   <div className="flex flex-col items-center text-center py-8">
-                    <StarRating rating={product.rating} size="lg" />
+                    <StarRating rating={product.rating || 0} size="lg" />
                     <p className="text-2xl font-bold text-gray-900 mt-2">
-                      {product.rating} out of 5
+                      {product.rating?.toFixed(1) || "0.0"} out of 5
                     </p>
                     <p className="text-gray-600 mt-1">
-                      Based on {product.reviewCount} reviews
+                      Based on {product.reviewCount || 0} reviews
                     </p>
                   </div>
 
-                  <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center w-full">
                     <p className="text-red-700">
-                      ⭐ This product is highly rated by customers
+                      ⭐{" "}
+                      {product.rating >= 4
+                        ? "This product is highly rated by customers"
+                        : product.rating >= 3
+                        ? "This product has good customer ratings"
+                        : "Be the first to review this product"}
                     </p>
                   </div>
                 </motion.div>

@@ -4,29 +4,45 @@ import { useApi } from "./useApi";
 export const useProduct = () => {
   const { loading, error, callApi } = useApi();
   const [success, setSuccess] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [pagination, setPagination] = useState(null);
 
   const getProducts = useCallback(
     async (params = {}) => {
-      const queryString = new URLSearchParams(params).toString();
-      const endpoint = `/api/products${queryString ? `?${queryString}` : ""}`;
-      return await callApi(endpoint, "GET");
+      try {
+        const queryString = new URLSearchParams(params).toString();
+        const endpoint = `/products${queryString ? `?${queryString}` : ""}`;
+        const res = await callApi(endpoint, "GET");
+
+        if (res && res.data) {
+          setProducts(res.data.products || []);
+          setPagination(res.data.pagination || null);
+          setSuccess(true);
+        }
+        return res;
+      } catch (err) {
+        setProducts([]);
+        setPagination(null);
+        setSuccess(false);
+        throw err;
+      }
     },
     [callApi]
   );
 
   const getProductById = useCallback(
     async (id) => {
-      return await callApi(`/api/products/${id}`, "GET");
+      return await callApi(`/products/${id}`, "GET");
     },
     [callApi]
   );
 
   const getBestSellers = useCallback(async () => {
-    return await callApi("/api/products/best-sellers", "GET");
+    return await callApi("/products/best-sellers", "GET");
   }, [callApi]);
 
   const getProductStats = useCallback(async () => {
-    return await callApi("/api/products/stats", "GET");
+    return await callApi("/products/stats", "GET");
   }, [callApi]);
 
   return {
@@ -38,5 +54,7 @@ export const useProduct = () => {
     getBestSellers,
     getProductStats,
     setSuccess,
+    products,
+    pagination,
   };
 };

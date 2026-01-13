@@ -28,6 +28,7 @@ const products = [
   },
   {
     id: 2,
+    isFeatured: true,
     name: "Classic Leather Watch",
     brand: "Timeless Co.",
     price: 149000.99,
@@ -60,6 +61,7 @@ const products = [
     originalPrice: 89000.99,
     discount: 33,
     rating: 4.3,
+    isFeatured: true,
     reviewCount: 89,
     description:
       "Sleek and functional backpack with water-resistant fabric, hidden compartments, and padded laptop sleeve — perfect for daily use or travel.",
@@ -75,11 +77,11 @@ const products = [
     stockCount: 0,
     availabilityType: "limited",
     unit: "piece",
-    isFeatured: true,
     tags: ["backpack", "minimalist", "travel", "urban"],
   },
   {
     id: 4,
+    isFeatured: true,
     name: "Smart Fitness Watch",
     brand: "FitTrack",
     price: 99.99,

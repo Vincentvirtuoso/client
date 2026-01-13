@@ -12,11 +12,18 @@ const Footer = () => {
 
   return (
     <footer className="bg-gray-900 text-white">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
+      <div className="max-w-7xl mx-auto px-9 lg:px-12 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
           {/* Brand Section */}
           <div className="lg:col-span-2">
-            <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
+            <div className=" flex mb-6">
+              <img
+                src="/images/logo.jpg"
+                alt="Logo"
+                className="w-29 h-29 rounded-2xl object-cover"
+              />
+            </div>
+            <h3 className="text-2xl font-bold mb-4 bg-linear-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
               ShopVerse
             </h3>
             <p className="text-gray-400 mb-6 leading-relaxed">
