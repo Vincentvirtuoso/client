@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { LuCheckCircle, LuPackage, LuMail, LuClock } from "react-icons/lu";
+import { LuCircleCheck, LuPackage, LuMail, LuClock } from "react-icons/lu";
 import { useState } from "react";
 import { useOrder } from "../hooks/useOrder";
 
@@ -49,14 +49,14 @@ const OrderSuccess = () => {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-gray-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
+      <div className="">
         {/* Success Card */}
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="bg-linear-to-r from-green-500 to-emerald-600 p-8 text-center">
             <div className="flex justify-center mb-6">
               <div className="bg-white p-4 rounded-full">
-                <LuCheckCircle className="w-16 h-16 text-green-500" />
+                <LuCircleCheck className="w-16 h-16 text-green-500" />
               </div>
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">

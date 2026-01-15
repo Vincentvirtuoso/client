@@ -540,10 +540,10 @@ const Checkout = () => {
                     <img
                       src={item.image}
                       alt={item.name}
-                      className="w-16 h-16 object-cover rounded-md"
+                      className="w-16 h-16 object-contain rounded-md"
                     />
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 truncate">
+                      <h3 className="font-medium text-gray-900 truncate text-lg">
                         {item.name}
                       </h3>
                       <p className="text-sm text-gray-500">
