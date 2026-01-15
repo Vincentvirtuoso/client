@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { LuCheckCircle, LuPackage, LuMail, LuClock } from "react-icons/lu";
-import { orderService } from "../services/orderService";
 import { useState } from "react";
+import { useOrder } from "../hooks/useOrder";
 
 const OrderSuccess = () => {
   const location = useLocation();
@@ -12,6 +12,7 @@ const OrderSuccess = () => {
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
+  const { getOrder } = useOrder();
 
   useEffect(() => {
     if (!orderId && !orderNumber) {
@@ -27,7 +28,7 @@ const OrderSuccess = () => {
   const fetchOrderDetails = async () => {
     setLoading(true);
     try {
-      const response = await orderService.getOrder(orderId);
+      const response = await getOrder(orderId);
       setOrder(response.data.order);
     } catch (error) {
       console.error("Failed to fetch order:", error);
