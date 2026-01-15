@@ -105,7 +105,7 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="bg-linear-to-br from-gray-50 to-gray-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -276,10 +276,12 @@ const Cart = () => {
           </div>
 
           {/* Right Column - Order Summary */}
-          <div className="lg:col-span-1">
+          <div
+          // className="lg:col-span-1"
+          >
             <div className="space-y-6">
               {/* Coupon Card */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
+              {/* <div className="bg-white rounded-2xl shadow-lg p-6">
                 <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
                   <LuTag className="w-5 h-5 text-purple-600" />
                   Apply Coupon
@@ -345,7 +347,7 @@ const Cart = () => {
                     </div>
                   </div>
                 )}
-              </div>
+              </div> */}
 
               {/* Order Summary */}
               <div className="bg-white rounded-2xl shadow-lg p-6">

@@ -9,8 +9,6 @@ import {
   LuShield,
   LuTruck,
   LuCreditCard,
-  LuHeadphones,
-  LuStar,
 } from "react-icons/lu";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, EffectFade, Pagination } from "swiper/modules";
@@ -93,6 +91,9 @@ const LoginSignup = ({ authState }) => {
     try {
       let result;
       if (isLogin) {
+        delete form.firstName;
+        delete form.lastName;
+        delete form.phoneNumber;
         result = await login(form);
       } else {
         result = await register(form);
@@ -329,25 +330,34 @@ const LoginSignup = ({ authState }) => {
                   </div>
                 )}
 
-                <button
-                  type="submit"
-                  className={`w-full bg-red-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all transform active:scale-[0.98] ${
-                    loading
-                      ? "bg-red-600/40 hover:bg-red-700/40 cursor-wait"
-                      : ""
-                  } flex gap-4 justify-center items-center`}
-                  disabled={loading}
-                >
-                  {loading
-                    ? isLogin
-                      ? "Signing in…"
-                      : "Creating account…"
-                    : isLogin
-                    ? "Sign In"
-                    : "Create Account"}
+                {isLogin ? (
+                  <button
+                    type="submit"
+                    className={`w-full bg-red-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all transform active:scale-[0.98] ${
+                      loading.login
+                        ? "bg-red-600/40 hover:bg-red-700/40 cursor-wait"
+                        : ""
+                    } flex gap-4 justify-center items-center`}
+                    disabled={loading.login}
+                  >
+                    {loading.login ? "Signing in…" : "Sign In"}
+                    {loading.login && <Spinner />}
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className={`w-full bg-red-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all transform active:scale-[0.98] ${
+                      loading.register
+                        ? "bg-red-600/40 hover:bg-red-700/40 cursor-wait"
+                        : ""
+                    } flex gap-4 justify-center items-center`}
+                    disabled={loading.register}
+                  >
+                    {loading.register ? "Creating account…" : "Create Account"}
 
-                  {loading && <Spinner />}
-                </button>
+                    {loading.register && <Spinner />}
+                  </button>
+                )}
               </form>
 
               <p className="text-center text-sm text-gray-600">

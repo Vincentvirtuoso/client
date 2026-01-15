@@ -206,7 +206,7 @@ const UserMenu = ({
         aria-label="User menu"
       >
         <div className="relative">
-          <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-md">
+          <div className="w-8 h-8 bg-linear-to-br from-red-500 to-pink-500 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-md">
             {getUserInitial()}
           </div>
           {notificationCount > 0 && (
@@ -234,7 +234,7 @@ const UserMenu = ({
             aria-label="User menu"
           >
             {/* User Info Section */}
-            <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-red-50/90 to-pink-50/90">
+            <div className="px-5 py-4 border-b border-gray-100 bg-linear-to-r from-red-50/90 to-pink-50/90">
               <div className="flex items-start gap-3">
                 <div className="relative">
                   {user?.profileImage ? (
@@ -250,7 +250,7 @@ const UserMenu = ({
                   ) : null}
                   <div
                     className={`
-            w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-pink-500 
+            w-12 h-12 rounded-full bg-linear-to-br from-red-500 to-pink-500 
             flex items-center justify-center text-white font-bold text-lg
             border-2 border-white shadow-sm
             ${user?.profileImage ? "hidden" : "flex"}
@@ -270,7 +270,7 @@ const UserMenu = ({
 
                   {/* Account status - only show if user exists */}
                   {user?.membership && (
-                    <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-white text-[10px] font-bold rounded-full">
+                    <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 bg-linear-to-r from-amber-500 to-yellow-500 text-white text-[10px] font-bold rounded-full">
                       <LuStar className="w-2.5 h-2.5" />
                       {user.membership}
                     </div>
@@ -282,7 +282,7 @@ const UserMenu = ({
               {user?.needsReauth && (
                 <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <LuCircleAlert className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                    <LuCircleAlert className="w-4 h-4 text-amber-600 shrink-0" />
                     <p className="text-xs text-amber-700 font-medium">
                       Session expired. Please sign in again.
                     </p>

@@ -153,7 +153,7 @@ const ProductDetail = () => {
           {/* Image Gallery */}
           <motion.div variants={itemVariants} className="space-y-4">
             {/* Main Image */}
-            <div className="relative rounded-2xl shadow-sm border border-gray-100 overflow-hidden aspect-square flex items-center justify-center">
+            <div className="relative rounded-2xl shadow-sm border border-gray-100 overflow-hidden aspect-square flex items-center justify-center h-[450px] w-full">
               <div className="w-full h-full relative">
                 {product.images && product.images[selectedImage] && (
                   <ProductImage
@@ -247,7 +247,7 @@ const ProductDetail = () => {
                       src={image}
                       alt={`${product.name} view ${index + 1}`}
                       size="full"
-                      className="object-cover"
+                      // className="object-cover"
                     />
                   </button>
                 ))}

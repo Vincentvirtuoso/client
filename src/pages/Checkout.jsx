@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useCart from "../hooks/useCart";
-import { LuTruck, LuCreditCard, LuWallet } from "react-icons/lu";
+import { LuTruck, LuCreditCard, LuWallet, LuShield } from "react-icons/lu";
+import { FiLock } from "react-icons/fi";
 import toast from "react-hot-toast";
+import PaystackPayment from "../components/payments/PaystackPayment";
+import { useOrder } from "../hooks/useOrder";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -11,35 +14,44 @@ const Checkout = () => {
     subtotal = 0,
     totalItems = 0,
     clearCart,
+    user, // Assuming you have user info from auth context
   } = useCart() || {};
 
   const shippingFee = subtotal > 100000 ? 0 : 2500;
-  const discount = 0; // You can calculate this based on your logic
+  const discount = 0;
   const discountAmount = (subtotal * discount) / 100;
   const grandTotal = subtotal - discountAmount + shippingFee;
 
   const [form, setForm] = useState({
-    name: "",
-    email: "",
-    address: "",
-    city: "",
-    postalCode: "",
+    firstName: "",
+    lastName: "",
+    email: user?.email || "",
     phone: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "Nigeria",
+    instructions: "",
   });
 
   const [paymentMethod, setPaymentMethod] = useState("paystack");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState(null);
+
+  const { createOrder } = useOrder();
+
+  // If user has saved addresses, fetch them
+  const userAddresses = user?.addresses || [];
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  // Calculate estimated delivery date (2-3 business days)
   const getEstimatedDelivery = () => {
     const today = new Date();
     const deliveryDate = new Date(today);
-    deliveryDate.setDate(today.getDate() + 3); // 3 days from now
-
-    // Format date as "Friday, Dec 15"
+    deliveryDate.setDate(today.getDate() + 3);
     return deliveryDate.toLocaleDateString("en-US", {
       weekday: "long",
       month: "short",
@@ -47,74 +59,221 @@ const Checkout = () => {
     });
   };
 
-  const handlePlaceOrder = async () => {
-    // Enhanced validation
+  const validateForm = () => {
     const requiredFields = [
-      "name",
+      "firstName",
+      "lastName",
       "email",
-      "address",
-      "city",
-      "postalCode",
       "phone",
+      "addressLine1",
+      "city",
+      "state",
+      "postalCode",
     ];
-    const missingFields = requiredFields.filter((field) => !form[field].trim());
+    const missingFields = requiredFields.filter(
+      (field) => !form[field]?.trim()
+    );
 
     if (missingFields.length > 0) {
-      toast(`Please fill in all required fields: ${missingFields.join(", ")}`);
-      return;
+      toast.error(`Please fill in: ${missingFields.join(", ")}`);
+      return false;
     }
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.email)) {
-      toast("Please enter a valid email address");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      toast.error("Please enter a valid email address");
+      return false;
+    }
+
+    if (!/^[0-9+\-\s]{10,15}$/.test(form.phone)) {
+      toast.error("Please enter a valid phone number");
+      return false;
+    }
+
+    return true;
+  };
+
+  const prepareOrderData = () => {
+    // Transform cart items to match backend format
+    const orderItems = items.map((item) => ({
+      productId: item.id, // Assuming item.id is the product ID
+      quantity: item.quantity,
+      variantId: item.variantId || null,
+    }));
+
+    return {
+      items: orderItems,
+      shippingAddress: {
+        addressLine1: form.addressLine1,
+        addressLine2: form.addressLine2 || "",
+        city: form.city,
+        state: form.state,
+        postalCode: form.postalCode,
+        country: form.country,
+      },
+      paymentMethod,
+      discountCode: null, // You can add coupon logic here
+      notes: form.instructions || "",
+      billingAddress: selectedAddress?.isBillingDifferent
+        ? {
+            addressLine1: form.billingAddressLine1,
+            city: form.billingCity,
+            state: form.billingState,
+            postalCode: form.billingPostalCode,
+            country: form.billingCountry,
+          }
+        : undefined,
+    };
+  };
+
+  const handlePaystackSuccess = async (reference) => {
+    try {
+      // Update order with payment reference
+      // You might want to store the order temporarily and update it
+      console.log("Payment successful, reference:", reference);
+
+      // Navigate to success page
+      navigate("/order-success", {
+        state: {
+          orderNumber: `ORD-${Date.now()}`,
+          amount: grandTotal,
+          paymentMethod: "paystack",
+          estimatedDelivery: getEstimatedDelivery(),
+        },
+      });
+    } catch (error) {
+      console.log(error);
+
+      toast.error("Payment verification failed");
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!validateForm()) return;
+    if (items.length === 0) {
+      toast.error("Your cart is empty");
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      if (paymentMethod === "paystack") {
-        // Integrate with Paystack payment here
-        // await processPaystackPayment();
-        console.log("Processing Paystack payment...");
+      const orderData = prepareOrderData();
 
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (paymentMethod === "paystack") {
+        // For Paystack, you'll handle payment first
+        // The order will be created after successful payment via webhook
+        return; // Payment component will handle navigation
       }
 
-      // For cash on delivery or after successful payment
-      clearCart?.();
-      navigate("/order-success", {
-        replace: true,
-        state: {
-          orderDetails: {
-            ...form,
-            items,
-            total: grandTotal,
-            paymentMethod,
+      // For Cash on Delivery
+      const response = await createOrder(orderData);
+
+      if (response.data) {
+        toast.success("Order placed successfully!");
+        clearCart?.();
+
+        navigate("/order-success", {
+          replace: true,
+          state: {
+            orderId: response.data.order._id,
+            orderNumber: response.data.order.orderNumber,
+            amount: grandTotal,
+            paymentMethod: "cash_on_delivery",
             estimatedDelivery: getEstimatedDelivery(),
           },
-        },
-      });
+        });
+      }
     } catch (error) {
-      console.error("Payment failed:", error);
-      toast("Payment failed. Please try again.");
+      console.error("Order failed:", error);
+      const message = error.response?.data?.message || "Failed to place order";
+      toast.error(message);
+
+      // Check for stock issues
+      if (error.response?.data?.code === "INSUFFICIENT_STOCK") {
+        // Update cart with new stock information
+        toast("Some items are out of stock. Updating your cart...");
+        // You might want to refresh cart data here
+      }
     } finally {
       setIsProcessing(false);
     }
   };
 
+  const selectAddress = (address) => {
+    setSelectedAddress(address);
+    setForm({
+      ...form,
+      firstName: address.firstName || user?.firstName || "",
+      lastName: address.lastName || user?.lastName || "",
+      email: user?.email || "",
+      phone: address.phone || "",
+      addressLine1: address.street || "",
+      addressLine2: address.apartment || "",
+      city: address.city || "",
+      state: address.state || "",
+      postalCode: address.postalCode || "",
+      country: address.country || "Nigeria",
+      instructions: address.instructions || "",
+    });
+  };
+
   return (
-    <div className="py-8 px-4 sm:px-6 lg:px-8">
+    <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
         <p className="text-gray-600 mt-2">Complete your purchase securely</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column - Forms */}
-        <div className="space-y-6">
+        <div className="lg:col-span-2 space-y-6">
+          {/* Saved Addresses */}
+          {userAddresses.length > 0 && (
+            <section className="bg-white rounded-2xl shadow-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Saved Addresses</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {userAddresses.map((address) => (
+                  <div
+                    key={address._id}
+                    className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                      selectedAddress?._id === address._id
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                    onClick={() => selectAddress(address)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-medium capitalize">
+                          {address.type}
+                        </h3>
+                        {address.isDefault && (
+                          <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                            Default
+                          </span>
+                        )}
+                      </div>
+                      {selectedAddress?._id === address._id && (
+                        <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+                          <div className="w-2 h-2 bg-white rounded-full" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">
+                      {address.street}
+                      {address.apartment && `, ${address.apartment}`}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {address.city}, {address.state} {address.postalCode}
+                    </p>
+                    <p className="text-sm text-gray-600">{address.country}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {/* Shipping Information */}
           <section className="bg-white rounded-2xl shadow-lg p-6">
             <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
@@ -126,18 +285,34 @@ const Checkout = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label className="block">
                   <span className="text-sm font-medium text-gray-700">
-                    Full name *
+                    First Name *
                   </span>
                   <input
-                    name="name"
-                    value={form.name}
+                    name="firstName"
+                    value={form.firstName}
                     onChange={handleChange}
-                    placeholder="John Doe"
+                    placeholder="John"
                     className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                     required
                   />
                 </label>
 
+                <label className="block">
+                  <span className="text-sm font-medium text-gray-700">
+                    Last Name *
+                  </span>
+                  <input
+                    name="lastName"
+                    value={form.lastName}
+                    onChange={handleChange}
+                    placeholder="Doe"
+                    className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                    required
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label className="block">
                   <span className="text-sm font-medium text-gray-700">
                     Email *
@@ -152,18 +327,32 @@ const Checkout = () => {
                     required
                   />
                 </label>
+
+                <label className="block">
+                  <span className="text-sm font-medium text-gray-700">
+                    Phone *
+                  </span>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={form.phone}
+                    onChange={handleChange}
+                    placeholder="+234 800 000 0000"
+                    className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                    required
+                  />
+                </label>
               </div>
 
               <label className="block">
                 <span className="text-sm font-medium text-gray-700">
-                  Phone number *
+                  Address Line 1 *
                 </span>
                 <input
-                  type="tel"
-                  name="phone"
-                  value={form.phone}
+                  name="addressLine1"
+                  value={form.addressLine1}
                   onChange={handleChange}
-                  placeholder="+234 800 000 0000"
+                  placeholder="123 Main Street"
                   className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
                   required
                 />
@@ -171,19 +360,18 @@ const Checkout = () => {
 
               <label className="block">
                 <span className="text-sm font-medium text-gray-700">
-                  Address *
+                  Address Line 2 (Optional)
                 </span>
                 <input
-                  name="address"
-                  value={form.address}
+                  name="addressLine2"
+                  value={form.addressLine2}
                   onChange={handleChange}
-                  placeholder="123 Main Street, Apartment 4B"
+                  placeholder="Apartment 4B, Suite 2"
                   className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                  required
                 />
               </label>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <label className="block">
                   <span className="text-sm font-medium text-gray-700">
                     City *
@@ -199,7 +387,20 @@ const Checkout = () => {
                 </label>
                 <label className="block">
                   <span className="text-sm font-medium text-gray-700">
-                    Postal code *
+                    State *
+                  </span>
+                  <input
+                    name="state"
+                    value={form.state}
+                    onChange={handleChange}
+                    placeholder="Lagos State"
+                    className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                    required
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-medium text-gray-700">
+                    Postal Code *
                   </span>
                   <input
                     name="postalCode"
@@ -211,6 +412,37 @@ const Checkout = () => {
                   />
                 </label>
               </div>
+
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700">
+                  Country
+                </span>
+                <select
+                  name="country"
+                  value={form.country}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                >
+                  <option value="Nigeria">Nigeria</option>
+                  <option value="Ghana">Ghana</option>
+                  <option value="Kenya">Kenya</option>
+                  <option value="South Africa">South Africa</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700">
+                  Delivery Instructions (Optional)
+                </span>
+                <textarea
+                  name="instructions"
+                  value={form.instructions}
+                  onChange={handleChange}
+                  placeholder="Leave at the gate, call before delivery, etc."
+                  rows="3"
+                  className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                />
+              </label>
             </div>
           </section>
 
@@ -232,9 +464,15 @@ const Checkout = () => {
                   className="text-red-600 focus:ring-red-500"
                 />
                 <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <LuCreditCard className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium">Pay with Paystack</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <LuCreditCard className="w-5 h-5 text-gray-600" />
+                      <span className="font-medium">Pay with Paystack</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <LuShield className="w-4 h-4" />
+                      <span>Secure</span>
+                    </div>
                   </div>
                   <p className="text-sm text-gray-500 mt-1">
                     Secure payment with card, bank transfer, or USSD
@@ -246,31 +484,46 @@ const Checkout = () => {
                 <input
                   type="radio"
                   name="paymentMethod"
-                  value="cash"
-                  checked={paymentMethod === "cash"}
+                  value="cash_on_delivery"
+                  checked={paymentMethod === "cash_on_delivery"}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                   className="text-red-600 focus:ring-red-500"
                 />
                 <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <LuWallet className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium">Cash on Delivery</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <LuWallet className="w-5 h-5 text-gray-600" />
+                      <span className="font-medium">Cash on Delivery</span>
+                    </div>
+                    <span className="text-sm text-gray-500">₦0 fee</span>
                   </div>
                   <p className="text-sm text-gray-500 mt-1">
-                    Pay when your order arrives
+                    Pay when your order arrives. Available in all locations.
                   </p>
                 </div>
               </label>
             </div>
+
+            {/* Paystack Payment Component */}
+            {paymentMethod === "paystack" && (
+              <div className="mt-6">
+                <PaystackPayment
+                  amount={grandTotal}
+                  email={form.email}
+                  onSuccess={handlePaystackSuccess}
+                  onClose={() => setIsProcessing(false)}
+                />
+              </div>
+            )}
           </section>
         </div>
 
         {/* Right Column - Order Summary */}
-        <aside className="space-y-6">
+        <div className="space-y-6">
           {/* Order Items */}
-          <section className="bg-white rounded-2xl shadow-lg p-6">
+          <section className="bg-white rounded-2xl shadow-lg p-6 sticky top-30">
             <h2 className="text-xl font-semibold mb-4">
-              Order Items ({totalItems})
+              Order Summary ({totalItems})
             </h2>
 
             <div className="max-h-80 overflow-y-auto mb-6 space-y-4">
@@ -279,30 +532,35 @@ const Checkout = () => {
                   No items in your cart.
                 </p>
               ) : (
-                items.map((it) => (
+                items.map((item) => (
                   <div
-                    key={it.id}
+                    key={item.id}
                     className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
                   >
                     <img
-                      src={it.image}
-                      alt={it.name}
+                      src={item.image}
+                      alt={item.name}
                       className="w-16 h-16 object-cover rounded-md"
                     />
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-gray-900 truncate">
-                        {it.name}
+                        {item.name}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        Quantity: {it.quantity}
+                        Quantity: {item.quantity}
                       </p>
+                      {item.variant && (
+                        <p className="text-xs text-gray-500">
+                          {item.variant.name}
+                        </p>
+                      )}
                     </div>
                     <div className="text-right">
                       <div className="font-semibold text-gray-900">
-                        ₦{(it.price * it.quantity).toLocaleString()}
+                        ₦{(item.price * item.quantity).toLocaleString()}
                       </div>
                       <div className="text-sm text-gray-500">
-                        ₦{it.price.toLocaleString()} each
+                        ₦{item.price.toLocaleString()} each
                       </div>
                     </div>
                   </div>
@@ -311,15 +569,18 @@ const Checkout = () => {
             </div>
 
             {/* Delivery Estimate */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            {/* <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
               <div className="flex items-center gap-2 text-blue-800">
                 <LuTruck className="w-4 h-4" />
                 <span className="font-medium">Estimated Delivery</span>
               </div>
               <p className="text-blue-700 text-sm mt-1">
-                Your order will arrive by {getEstimatedDelivery()}
+                {getEstimatedDelivery()}
               </p>
-            </div>
+              <p className="text-blue-600 text-xs mt-1">
+                Free shipping on orders over ₦100,000
+              </p>
+            </div> */}
 
             {/* Order Summary */}
             <div className="space-y-3">
@@ -368,39 +629,51 @@ const Checkout = () => {
                   ₦{grandTotal.toLocaleString()}
                 </span>
               </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Inclusive of all taxes
+              </p>
+            </div>
+
+            {/* Place Order Button for COD */}
+            {paymentMethod === "cash_on_delivery" && (
+              <button
+                onClick={handlePlaceOrder}
+                disabled={isProcessing || items.length === 0}
+                className="w-full mt-6 bg-red-600 text-white font-semibold py-4 rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+              >
+                {isProcessing ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  `Place Order - ₦${grandTotal.toLocaleString()}`
+                )}
+              </button>
+            )}
+
+            <div className="flex flex-col gap-3 mt-6">
+              <button
+                onClick={() => navigate("/cart")}
+                className="w-full border-2 border-gray-300 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-50 transition-all"
+              >
+                Back to Cart
+              </button>
+            </div>
+
+            {/* Security Notice */}
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <FiLock className="w-4 h-4" />
+                <span>Your payment information is secure and encrypted</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                By placing your order, you agree to our Terms of Service and
+                Privacy Policy
+              </p>
             </div>
           </section>
-
-          {/* Place Order Button */}
-          <button
-            onClick={handlePlaceOrder}
-            disabled={isProcessing || items.length === 0}
-            className="w-full bg-red-600 text-white font-semibold py-4 rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] flex items-center justify-center gap-2"
-          >
-            {isProcessing ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Processing...
-              </>
-            ) : paymentMethod === "cash" ? (
-              `Place Order - ₦${grandTotal.toLocaleString()}`
-            ) : (
-              `Pay Now - ₦${grandTotal.toLocaleString()}`
-            )}
-          </button>
-
-          <button
-            onClick={() => navigate("/cart")}
-            className="w-full border-2 border-gray-300 text-gray-700 font-semibold py-3 rounded-lg hover:bg-gray-50 transition-all"
-          >
-            Back to Cart
-          </button>
-
-          {/* Security Notice */}
-          <div className="text-center text-sm text-gray-500">
-            <p>🔒 Your payment information is secure and encrypted</p>
-          </div>
-        </aside>
+        </div>
       </div>
     </div>
   );

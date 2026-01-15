@@ -10,7 +10,7 @@ import { LuX } from "react-icons/lu";
 import { AuthProvider } from "./context/AuthContext";
 
 const App = () => {
-  const [promoBannerVisible, setPromoBannerVisible] = useState(true);
+  const [promoBannerVisible, setPromoBannerVisible] = useState(false);
 
   return (
     <AuthProvider>

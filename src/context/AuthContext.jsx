@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useReducer, useEffect, useCallback } from "react";
 import { useApi } from "../hooks/useApi";
 import {
   setUnauthorizedLogoutHandler,
@@ -7,150 +7,197 @@ import {
 
 export const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const { loading, error, callApi } = useApi();
-  const [user, setUser] = useState(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
+const initialState = {
+  user: null,
 
-  // Connect axios interceptor handlers
+  status: "booting",
+  loading: {
+    init: true,
+    login: false,
+    register: false,
+    logout: false,
+    refresh: false,
+    verifyEmail: false,
+    resendVerification: false,
+  },
+
+  error: null,
+};
+
+function authReducer(state, action) {
+  switch (action.type) {
+    case "INIT_START":
+      return {
+        ...state,
+        loading: { ...state.loading, init: true },
+      };
+
+    case "INIT_SUCCESS":
+      return {
+        ...state,
+        user: action.payload ?? null,
+        status: action.payload ? "authenticated" : "unauthenticated",
+        loading: { ...state.loading, init: false },
+      };
+
+    case "SET_USER":
+      return {
+        ...state,
+        user: action.payload,
+        status: action.payload ? "authenticated" : "unauthenticated",
+      };
+
+    case "LOGOUT":
+      return {
+        ...state,
+        user: null,
+        status: "unauthenticated",
+      };
+
+    case "ACTION_START":
+      return {
+        ...state,
+        loading: { ...state.loading, [action.action]: true },
+        error: null,
+      };
+
+    case "ACTION_END":
+      return {
+        ...state,
+        loading: { ...state.loading, [action.action]: false },
+      };
+
+    case "ERROR":
+      return {
+        ...state,
+        error: action.payload,
+        status: "error",
+      };
+
+    default:
+      return state;
+  }
+}
+
+export const AuthProvider = ({ children }) => {
+  const { callApi } = useApi();
+  const [state, dispatch] = useReducer(authReducer, initialState);
+
+  const start = (action) => dispatch({ type: "ACTION_START", action });
+
+  const end = (action) => dispatch({ type: "ACTION_END", action });
+
+  const initializeAuth = useCallback(async () => {
+    dispatch({ type: "INIT_START" });
+
+    try {
+      const data = await callApi("auth/me", "GET");
+      dispatch({ type: "INIT_SUCCESS", payload: data?.user ?? null });
+    } catch {
+      dispatch({ type: "INIT_SUCCESS", payload: null });
+    }
+  }, [callApi]);
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
   useEffect(() => {
     setUnauthorizedLogoutHandler(() => {
-      console.log("Unauthorized - logging out");
-      setUser(null);
+      dispatch({ type: "LOGOUT" });
     });
 
     setRefreshHandler(async () => {
-      console.log("Attempting token refresh...");
-      const data = await callApi("auth/refresh-token", "POST");
-      if (data?.data?.user) {
-        setUser(data.data.user);
+      start("refresh");
+
+      try {
+        const data = await callApi("auth/refresh-token", "POST");
+        if (data?.data?.user) {
+          dispatch({ type: "SET_USER", payload: data.data.user });
+        }
+        return data;
+      } finally {
+        end("refresh");
       }
-      return data;
     });
   }, [callApi]);
 
-  // Initialize auth state on mount
-  useEffect(() => {
-    if (isInitialized) return;
-    initializeAuth();
-  }, [isInitialized]);
-
-  const initializeAuth = async () => {
+  const login = async (payload) => {
+    start("login");
     try {
-      setAuthLoading(true);
-      const data = await callApi("auth/me", "GET");
-
-      if (data?.user) {
-        setUser(data.user);
+      const data = await callApi("auth/login", "POST", payload);
+      if (data?.data?.user) {
+        dispatch({ type: "SET_USER", payload: data.data.user });
       }
-    } catch (err) {
-      console.log("Not authenticated or session expired");
-      console.log(err);
-
-      setUser(null);
+      return data;
     } finally {
-      setAuthLoading(false);
-      setIsInitialized(true);
+      end("login");
     }
   };
 
-  const login = async ({ email, password }) => {
-    const data = await callApi("auth/login", "POST", { email, password });
-
-    if (data?.data?.user) {
-      setUser(data.data.user);
+  const register = async (payload) => {
+    start("register");
+    try {
+      const data = await callApi("auth/register", "POST", payload);
+      if (data?.user) {
+        dispatch({ type: "SET_USER", payload: data.user });
+      }
+      return data;
+    } finally {
+      end("register");
     }
-    return data;
-  };
-
-  const register = async ({
-    firstName,
-    lastName,
-    email,
-    password,
-    phoneNumber,
-    role,
-  }) => {
-    const data = await callApi("auth/register", "POST", {
-      firstName,
-      lastName,
-      email,
-      password,
-      phoneNumber,
-      role,
-    });
-
-    if (data?.user) {
-      setUser(data.user);
-    }
-    return data;
   };
 
   const logout = async () => {
+    start("logout");
     try {
       await callApi("auth/logout", "POST");
-    } catch (err) {
-      console.error("Logout error:", err);
     } finally {
-      setUser(null);
-    }
-  };
-
-  const refreshToken = async () => {
-    try {
-      const data = await callApi("auth/refresh-token", "POST");
-      if (data?.data?.user) {
-        setUser(data.data.user);
-      }
-      return data;
-    } catch (err) {
-      setUser(null);
-      throw err;
+      dispatch({ type: "LOGOUT" });
+      end("logout");
     }
   };
 
   const verifyEmail = async (token, email) => {
-    const data = await callApi(
-      `auth/verify-email?token=${token}&email=${email}`,
-      "GET"
-    );
-
-    if (data?.user) {
-      setUser(data.user);
+    start("verifyEmail");
+    try {
+      const data = await callApi(
+        `auth/verify-email?token=${token}&email=${email}`,
+        "GET"
+      );
+      if (data?.user) {
+        dispatch({ type: "SET_USER", payload: data.user });
+      }
+      return data;
+    } finally {
+      end("verifyEmail");
     }
-
-    return data;
   };
 
   const resendVerificationEmail = async (email) => {
-    const data = await callApi("auth/resend-verification", "POST", { email });
-    return data;
-  };
-
-  const refreshUser = () => {
-    setIsInitialized(false);
-  };
-
-  const updateUser = (userData) => {
-    setUser((prev) => ({ ...prev, ...userData }));
+    start("resendVerification");
+    try {
+      return await callApi("auth/resend-verification", "POST", { email });
+    } finally {
+      end("resendVerification");
+    }
   };
 
   const value = {
-    user,
-    loading: loading || authLoading,
-    error,
-    isAuthenticated: !!user,
-    isInitialized,
+    user: state.user,
+    status: state.status,
+    error: state.error,
+
+    isAuthenticated: state.status === "authenticated",
+    isBooting: state.loading.init,
+
+    loading: state.loading,
+
     login,
     register,
     logout,
-    refreshToken,
     verifyEmail,
     resendVerificationEmail,
-    updateUser,
-    setUser,
-    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -4,7 +4,7 @@ const ProductDetailSkeleton = () => (
     <div className="px-4 sm:px-6 lg:px-8 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Image Gallery Skeleton */}
-        <div className="space-y-4">
+        <div className="space-y-4 h-[450px]">
           <div className="aspect-square bg-gray-200 rounded-2xl animate-pulse relative">
             <div className="absolute top-4 left-4 flex flex-col gap-2">
               <div className="h-6 w-20 bg-gray-300 rounded-full animate-pulse"></div>

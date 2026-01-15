@@ -25,7 +25,6 @@ const Navbar = ({
   // userName = "Guest",
   onCartClick,
   onSignIn,
-  onSignOut,
   logo = "ShopVerse",
   promoBannerVisible,
 }) => {
@@ -38,7 +37,7 @@ const Navbar = ({
   const [searchFocused, setSearchFocused] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
 
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
 
   const categoryRef = useRef(null);
   const userMenuRef = useRef(null);
@@ -480,13 +479,13 @@ const Navbar = ({
                 isAuthenticated={isAuthenticated}
                 userName={userName}
                 onSignIn={onSignIn}
-                onSignOut={onSignOut}
+                onSignOut={() => logout()}
                 userMenuOpen={userMenuOpen}
                 setUserMenuOpen={setUserMenuOpen}
                 userMenuRef={userMenuRef}
                 wishlistCount={wishlistCount}
                 user={user}
-                loading={loading}
+                loading={loading.init}
               />
 
               {/* Enhanced Cart Button */}
@@ -513,7 +512,7 @@ const Navbar = ({
           onClose={() => setMobileOpen(false)}
           logo={logo}
           onSignIn={onSignIn}
-          onSignOut={onSignOut}
+          onSignOut={() => logout()}
           promoBannerVisible={promoBannerVisible}
         />
       )}

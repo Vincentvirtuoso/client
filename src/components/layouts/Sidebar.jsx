@@ -255,9 +255,6 @@ const UserMenu = ({
     );
   };
 
-  /* =======================
-     RENDER MENU
-  ======================= */
   return (
     <div
       className={`
@@ -415,11 +412,11 @@ const Sidebar = ({
           wishlistCount={wishlistCount}
           notificationsCount={6}
           onSignOut={onSignOut}
-          loading={loading}
+          loading={loading.init}
         />
 
         <UserSection
-          loading={loading}
+          loading={loading.init}
           user={user}
           userName={user?.name || "Guest"}
           onSignIn={onSignIn}
