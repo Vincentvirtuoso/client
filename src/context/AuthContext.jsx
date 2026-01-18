@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: "INIT_START" });
 
     try {
-      const data = await callApi("auth/me", "GET");
+      const data = await callApi({ endpoint: "auth/me", method: "GET" });
       dispatch({ type: "INIT_SUCCESS", payload: data?.user ?? null });
     } catch {
       dispatch({ type: "INIT_SUCCESS", payload: null });
@@ -111,7 +111,10 @@ export const AuthProvider = ({ children }) => {
       start("refresh");
 
       try {
-        const data = await callApi("auth/refresh-token", "POST");
+        const data = await callApi({
+          endpoint: "auth/refresh-token",
+          method: "POST",
+        });
         if (data?.data?.user) {
           dispatch({ type: "SET_USER", payload: data.data.user });
         }
@@ -125,7 +128,11 @@ export const AuthProvider = ({ children }) => {
   const login = async (payload) => {
     start("login");
     try {
-      const data = await callApi("auth/login", "POST", payload);
+      const data = await callApi({
+        endpoint: "auth/login",
+        method: "POST",
+        body: payload,
+      });
       if (data?.data?.user) {
         dispatch({ type: "SET_USER", payload: data.data.user });
       }
@@ -138,7 +145,11 @@ export const AuthProvider = ({ children }) => {
   const register = async (payload) => {
     start("register");
     try {
-      const data = await callApi("auth/register", "POST", payload);
+      const data = await callApi({
+        endpoint: "auth/register",
+        method: "POST",
+        body: payload,
+      });
       if (data?.user) {
         dispatch({ type: "SET_USER", payload: data.user });
       }
@@ -151,7 +162,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     start("logout");
     try {
-      await callApi("auth/logout", "POST");
+      await callApi({ endpoint: "auth/logout", method: "POST" });
     } finally {
       dispatch({ type: "LOGOUT" });
       end("logout");
@@ -161,10 +172,10 @@ export const AuthProvider = ({ children }) => {
   const verifyEmail = async (token, email) => {
     start("verifyEmail");
     try {
-      const data = await callApi(
-        `auth/verify-email?token=${token}&email=${email}`,
-        "GET"
-      );
+      const data = await callApi({
+        endpoint: `auth/verify-email?token=${token}&email=${email}`,
+        method: "GET",
+      });
       if (data?.user) {
         dispatch({ type: "SET_USER", payload: data.user });
       }
@@ -177,7 +188,11 @@ export const AuthProvider = ({ children }) => {
   const resendVerificationEmail = async (email) => {
     start("resendVerification");
     try {
-      return await callApi("auth/resend-verification", "POST", { email });
+      return await callApi({
+        endpoint: "auth/resend-verification",
+        method: "POST",
+        body: { email },
+      });
     } finally {
       end("resendVerification");
     }

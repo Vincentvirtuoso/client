@@ -5,11 +5,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ProductCard from "../components/common/ProductCard";
 import AdvancedFilters from "../section/productList/AdvancedFilters";
 import { useProduct } from "../hooks/useProduct";
-import { FiAlertCircle, FiAlertTriangle } from "react-icons/fi";
 import {
   ProductListError,
   ProductListSkeleton,
 } from "../components/skeleton/ProductListSkeleton";
+import useDebounce, { useDebouncedCallback } from "../hooks/useDebounce";
 
 function ProductList() {
   const location = useLocation();
@@ -42,16 +42,13 @@ function ProductList() {
     parseInt(searchParams.get("page")) || 1
   );
 
-  // Extract categories from products
-  const categories = useMemo(() => {
-    if (!products) return [];
-    return [...new Set(products.map((product) => product.category))];
-  }, [products]);
+  const debouncedSearchTerm = useDebounce(searchTerm, 700);
 
-  const buildApiParams = () => {
+  // Create a memoized params object that only changes when debounced values change
+  const apiParams = useMemo(() => {
     const params = {};
 
-    if (searchTerm) params.search = searchTerm;
+    if (debouncedSearchTerm) params.search = debouncedSearchTerm;
     if (selectedCategories.length > 0)
       params.categories = selectedCategories.join(",");
     if (priceRange[0] > 0) params.minPrice = priceRange[0];
@@ -88,8 +85,23 @@ function ProductList() {
     }
 
     return params;
-  };
-  // Update URL params
+  }, [
+    debouncedSearchTerm,
+    selectedCategories,
+    priceRange,
+    minRating,
+    inStockOnly,
+    currentPage,
+    sortBy,
+  ]);
+
+  // Extract categories from products
+  const categories = useMemo(() => {
+    if (!products) return [];
+    return [...new Set(products.map((product) => product.category))];
+  }, [products]);
+
+  // Update URL params immediately (no debounce)
   useEffect(() => {
     const params = new URLSearchParams();
 
@@ -116,16 +128,15 @@ function ProductList() {
     navigate,
   ]);
 
-  // Fetch products when filters change
   useEffect(() => {
-    const params = buildApiParams();
-    getProducts(params);
-
     // Reset to page 1 when filters change (except page itself)
     const searchParams = new URLSearchParams(location.search);
     const urlPage = parseInt(searchParams.get("page")) || 1;
     setCurrentPage(urlPage);
-  }, [location.search, sortBy]);
+
+    // Call API with debounced params
+    getProducts(apiParams);
+  }, [apiParams, location.search]);
 
   // Parse URL parameters on component mount
   useEffect(() => {
@@ -209,7 +220,6 @@ function ProductList() {
 
     return filters;
   }, [searchTerm, selectedCategories, priceRange, minRating, inStockOnly]);
-
   const clearAllFilters = () => {
     setSearchTerm("");
     setSelectedCategories([]);

@@ -1,69 +1,201 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useApi } from "./useApi";
 
 export const useOrder = () => {
-  const { loading, error, callApi } = useApi();
+  const { loading, error, callApi, abort } = useApi();
+  const [orders, setOrders] = useState([]);
+  const [orderStats, setOrderStats] = useState({
+    total: 0,
+    delivered: 0,
+    processing: 0,
+    inTransit: 0,
+  });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
 
   const createOrder = useCallback(
     async (orderData) => {
-      return await callApi("/orders", "POST", orderData);
+      return await callApi({
+        endpoint: "/orders",
+        method: "POST",
+        body: orderData,
+      });
     },
     [callApi]
   );
 
-  const getOrder = useCallback(
-    async (id) => {
-      return await callApi(`/orders/${id}`, "GET");
-    },
-    [callApi]
-  );
-
-  const getMyOrders = useCallback(
+  const fetchOrders = useCallback(
     async (params = {}) => {
-      const queryString = new URLSearchParams(params).toString();
-      const endpoint = `/orders/my-orders${
-        queryString ? `?${queryString}` : ""
-      }`;
-      return await callApi(endpoint, "GET");
+      try {
+        const queryParams = new URLSearchParams({
+          page: params.page || pagination.page,
+          limit: params.limit || pagination.limit,
+          ...params,
+        });
+
+        const data = await callApi({
+          endpoint: `/orders/my-orders?${queryParams}`,
+          key: "fetchOrders",
+          cancelPrevious: true,
+        });
+
+        if (data) {
+          setOrders(data.data.orders || []);
+          setPagination(data.data.pagination || {});
+          return data.data.orders;
+        }
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+        throw err;
+      }
+    },
+    [callApi, pagination.page, pagination.limit]
+  );
+
+  const fetchOrderById = useCallback(
+    async (orderId) => {
+      try {
+        const data = await callApi({ endpoint: `/orders/${orderId}` });
+        return data?.data.order || null;
+      } catch (err) {
+        console.error(`Error fetching order ${orderId}:`, err);
+        throw err;
+      }
+    },
+    [callApi]
+  );
+
+  const fetchOrderStats = useCallback(async () => {
+    try {
+      const data = await callApi({
+        endpoint: "/orders/my-orders?limit=1000",
+        key: "fetchOrderStats",
+      });
+
+      if (data?.data?.orders) {
+        const stats = {
+          total: data.data.orders.length,
+          delivered: data.data.orders.filter((o) => o.status === "delivered")
+            .length,
+          processing: data.data.orders.filter((o) => o.status === "processing")
+            .length,
+          inTransit: data.data.orders.filter((o) =>
+            ["shipped", "in_transit", "out_for_delivery"].includes(o.status)
+          ).length,
+        };
+
+        setOrderStats(stats);
+        return stats;
+      }
+    } catch (err) {
+      console.error("Error fetching order stats:", err);
+      throw err;
+    }
+  }, [callApi]);
+
+  const updateOrderStatus = useCallback(
+    async (orderId, status, notes = "") => {
+      try {
+        const data = await callApi({
+          endpoint: `/orders/${orderId}/status`,
+          method: "PATCH",
+          body: {
+            status,
+            notes,
+          },
+        });
+
+        // Update local state
+        if (data?.data) {
+          setOrders((prev) =>
+            prev.map((order) =>
+              order._id === orderId ? { ...order, ...data.data } : order
+            )
+          );
+        }
+
+        return data?.data || null;
+      } catch (err) {
+        console.error(`Error updating order ${orderId} status:`, err);
+        throw err;
+      }
     },
     [callApi]
   );
 
   const cancelOrder = useCallback(
-    async (id, reason = "") => {
-      return await callApi(`/orders/${id}/cancel`, "PATCH", { reason });
+    async (orderId, reason = "") => {
+      try {
+        const data = await callApi({
+          endpoint: `/orders/${orderId}/cancel`,
+          method: "PATCH",
+          body: {
+            reason,
+          },
+        });
+
+        if (data?.data) {
+          setOrders((prev) =>
+            prev.map((order) =>
+              order._id === orderId ? { ...order, status: "cancelled" } : order
+            )
+          );
+        }
+
+        return data?.data || null;
+      } catch (err) {
+        console.error(`Error cancelling order ${orderId}:`, err);
+        throw err;
+      }
     },
     [callApi]
   );
 
   const requestReturn = useCallback(
     async (id, returnData) => {
-      return await callApi(`/orders/${id}/returns`, "POST", returnData);
+      return await callApi({
+        endpoint: `/orders/${id}/returns`,
+        method: "POST",
+        body: returnData,
+      });
     },
     [callApi]
   );
 
   const getInvoice = useCallback(
     async (id) => {
-      return await callApi(`/orders/${id}/invoice`, "GET");
+      return await callApi({
+        endpoint: `/orders/${id}/invoice`,
+        method: "GET",
+      });
     },
     [callApi]
   );
 
   const confirmCashOnDelivery = useCallback(
     async (id, data) => {
-      return await callApi(`/orders/${id}/confirm-cod`, "POST", data);
+      return await callApi({
+        endpoint: `/orders/${id}/confirm-cod`,
+        method: "POST",
+        body: data,
+      });
     },
     [callApi]
   );
 
   const simulatePaystackPayment = useCallback(
     async (paymentData) => {
-      return await callApi(
-        "/orders/webhook/paystack/simulate",
-        "POST",
-        paymentData
-      );
+      return await callApi({
+        endpoint: "/orders/webhook/paystack/simulate",
+        method: "POST",
+        body: paymentData,
+      });
     },
     [callApi]
   );
@@ -107,16 +239,72 @@ export const useOrder = () => {
     );
   };
 
+  const searchOrders = useCallback(
+    async (searchTerm, statusFilter = "all") => {
+      const params = {};
+
+      if (searchTerm) {
+        params.search = searchTerm;
+      }
+
+      if (statusFilter !== "all") {
+        params.status = statusFilter;
+      }
+
+      return await fetchOrders(params);
+    },
+    [fetchOrders]
+  );
+
+  // Pagination functions
+  const goToPage = useCallback(
+    async (page) => {
+      if (page < 1 || page > pagination.totalPages) return;
+      await fetchOrders({ page });
+    },
+    [fetchOrders, pagination.totalPages]
+  );
+
+  const nextPage = useCallback(async () => {
+    if (pagination.hasNextPage) {
+      await fetchOrders({ page: pagination.page + 1 });
+    }
+  }, [fetchOrders, pagination.page, pagination.hasNextPage]);
+
+  const prevPage = useCallback(async () => {
+    if (pagination.hasPrevPage) {
+      await fetchOrders({ page: pagination.page - 1 });
+    }
+  }, [fetchOrders, pagination.page, pagination.hasPrevPage]);
+
+  // Load initial data
+  useEffect(() => {
+    fetchOrders();
+    fetchOrderStats();
+
+    return () => {
+      abort();
+    };
+  }, []);
+
   return {
     // State
     loading,
     error,
-
-    // Methods
-    createOrder,
-    getOrder,
-    getMyOrders,
+    orders,
+    orderStats,
+    pagination,
+    fetchOrders,
+    fetchOrderById,
+    fetchOrderStats,
+    updateOrderStatus,
     cancelOrder,
+    searchOrders,
+    goToPage,
+    nextPage,
+    prevPage,
+    abort,
+    createOrder,
     requestReturn,
     getInvoice,
     confirmCashOnDelivery,

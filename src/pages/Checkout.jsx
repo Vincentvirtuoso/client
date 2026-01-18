@@ -521,7 +521,7 @@ const Checkout = () => {
         {/* Right Column - Order Summary */}
         <div className="space-y-6">
           {/* Order Items */}
-          <section className="bg-white rounded-2xl shadow-lg p-6 sticky top-30">
+          <section className="bg-white rounded-2xl shadow-lg p-6 sticky top-24">
             <h2 className="text-xl font-semibold mb-4">
               Order Summary ({totalItems})
             </h2>

@@ -12,7 +12,7 @@ export const useProduct = () => {
       try {
         const queryString = new URLSearchParams(params).toString();
         const endpoint = `/products${queryString ? `?${queryString}` : ""}`;
-        const res = await callApi(endpoint, "GET");
+        const res = await callApi({ endpoint, method: "GET" });
 
         if (res && res.data) {
           setProducts(res.data.products || []);
@@ -32,17 +32,17 @@ export const useProduct = () => {
 
   const getProductById = useCallback(
     async (id) => {
-      return await callApi(`/products/${id}`, "GET");
+      return await callApi({ endpoint: `/products/${id}`, method: "GET" });
     },
     [callApi]
   );
 
   const getBestSellers = useCallback(async () => {
-    return await callApi("/products/best-sellers", "GET");
+    return await callApi({ endpoint: "/products/best-sellers", method: "GET" });
   }, [callApi]);
 
   const getProductStats = useCallback(async () => {
-    return await callApi("/products/stats", "GET");
+    return await callApi({ endpoint: "/products/stats", method: "GET" });
   }, [callApi]);
 
   return {
