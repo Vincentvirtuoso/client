@@ -30,6 +30,17 @@ export const useOrder = () => {
     [callApi]
   );
 
+  const verifyPayment = useCallback(
+    async (reference) => {
+      return await callApi({
+        endpoint: `/payments/verify`,
+        method: "POST",
+        body: { reference },
+      });
+    },
+    [callApi]
+  );
+
   const fetchOrders = useCallback(
     async (params = {}) => {
       try {
@@ -305,6 +316,7 @@ export const useOrder = () => {
     prevPage,
     abort,
     createOrder,
+    verifyPayment,
     requestReturn,
     getInvoice,
     confirmCashOnDelivery,

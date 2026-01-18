@@ -153,6 +153,7 @@ const OrderDetail = () => {
       </div>
     );
   }
+  console.log(order);
 
   const StatusIcon = getIconComponent(statusConfig[order.status]?.icon);
   const statusColor = statusConfig[order.status]?.color || "bg-gray-500";
@@ -216,12 +217,12 @@ const OrderDetail = () => {
                     className="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0"
                   >
                     <div className="flex items-center space-x-4">
-                      <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                      <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden">
                         {item.product?.image ? (
                           <img
                             src={item.product.image}
                             alt={item.product?.name || "Product"}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-contain"
                           />
                         ) : (
                           <FiPackage className="w-6 h-6 text-gray-400" />

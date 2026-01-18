@@ -16,6 +16,7 @@ import SavedProducts from "../pages/SavedProducts";
 import OrderDetail from "../pages/OrderDetail";
 import VerifyEmail from "../pages/auth/VerifyEmail";
 import VerifyEmailNotice from "../pages/auth/VerifyEmailNotice";
+import PaymentIssue from "../pages/PaymentIssue";
 
 const router = createBrowserRouter([
   {
@@ -59,6 +60,7 @@ const router = createBrowserRouter([
         ),
       },
       { path: "order-success", element: <OrderSuccess /> },
+      { path: "payment-issue", element: <PaymentIssue /> },
     ],
   },
   {

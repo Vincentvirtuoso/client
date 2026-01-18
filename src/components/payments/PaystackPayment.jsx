@@ -14,7 +14,7 @@ const PaystackPayment = ({ amount, email, orderData }) => {
   const { pay } = usePaystackPayment();
 
   const { clearCart } = useCart();
-  const { createOrder } = useOrder();
+  const { createOrder, verifyPayment } = useOrder();
   const navigate = useNavigate();
 
   const handlePayment = () => {
@@ -30,6 +30,7 @@ const PaystackPayment = ({ amount, email, orderData }) => {
 
     setLoading(true);
 
+    // Generate a unique reference
     const reference = `PSK-${Date.now()}-${Math.random()
       .toString(36)
       .slice(2, 8)}`;
@@ -39,12 +40,24 @@ const PaystackPayment = ({ amount, email, orderData }) => {
       email,
       reference,
 
-      onSuccess: async (response) => {
+      onSuccess: async (paystackResponse) => {
         try {
+          // CRITICAL: Verify payment on backend before creating order
+          const verificationResult = await verifyPayment(
+            paystackResponse.reference
+          );
+
+          if (!verificationResult?.data?.verified) {
+            throw new Error("Payment verification failed");
+          }
+
+          // Only create order after backend confirms payment
           const result = await createOrder({
             ...orderData,
             paymentMethod: "paystack",
-            paymentReference: response.reference,
+            paymentReference: paystackResponse.reference,
+            paymentStatus: "paid",
+            amount: verificationResult.data.amount / 100, // Convert from kobo
           });
 
           const order = result?.data?.order;
@@ -53,21 +66,31 @@ const PaystackPayment = ({ amount, email, orderData }) => {
           }
 
           clearCart?.();
-
           toast.success("Payment successful");
 
           navigate("/order-success", {
             state: {
               orderId: order._id,
               orderNumber: order.orderNumber,
-              amount,
+              amount: verificationResult.data.amount / 100,
               paymentMethod: "paystack",
-              reference: response.reference,
+              reference: paystackResponse.reference,
             },
           });
         } catch (err) {
-          console.error(err);
-          toast.error("Payment verified but order failed. Contact support.");
+          console.error("Payment processing error:", err);
+          toast.error(
+            err.message || "Payment verified but order failed. Contact support."
+          );
+
+          // Navigate to a support page with payment reference
+          navigate("/payment-issue", {
+            state: {
+              reference: paystackResponse.reference,
+              amount,
+              email,
+            },
+          });
         } finally {
           setLoading(false);
         }
@@ -76,6 +99,12 @@ const PaystackPayment = ({ amount, email, orderData }) => {
       onClose: () => {
         setLoading(false);
         toast("Payment cancelled");
+      },
+
+      onError: (error) => {
+        setLoading(false);
+        console.error("Paystack error:", error);
+        toast.error("Payment failed. Please try again.");
       },
     });
   };
