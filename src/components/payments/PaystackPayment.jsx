@@ -28,8 +28,9 @@ const PaystackPayment = ({ amount, email, orderData }) => {
 
     setLoading(true);
 
-    // Generate a unique reference
-    const reference = `PSK-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const [reference] = useState(() => 
+    `PSK-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  );
 
     // 1️⃣ Create order immediately before verification
     let order;
