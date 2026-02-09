@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { LuTriangleAlert, LuRefreshCw } from "react-icons/lu";
+import { useOrder } from "../hooks/useOrder";
 
 const PaymentIssue = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
+  const { verifyPayment } = useOrder();
   // Get data passed from navigation
   const { reference, amount, email } = location.state || {};
 
@@ -30,20 +31,12 @@ const PaymentIssue = () => {
     setIsRetrying(true);
 
     try {
-      // Simulate retry payment process
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const res = await verifyPayment(reference);
 
-      // Here you would typically:
-      // 1. Call your backend to verify payment status
-      // 2. Or initiate a new payment
-
-      // For demo, we'll show success after 2 seconds
       setIsRetrying(false);
       setRetryCount((prev) => prev + 1);
 
-      alert(
-        "Payment retry initiated. Please check your email for confirmation."
-      );
+      console.log(res);
     } catch (error) {
       setIsRetrying(false);
       alert("Retry failed. Please try again or contact support.");
@@ -58,7 +51,7 @@ const PaymentIssue = () => {
 
     // Open email client
     window.location.href = `mailto:support@yourcompany.com?subject=${encodeURIComponent(
-      subject
+      subject,
     )}&body=${encodeURIComponent(body)}`;
   };
 
@@ -76,7 +69,7 @@ const PaymentIssue = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 md:p-8">
+      <div className="p-6">
         {/* Header */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
@@ -120,7 +113,7 @@ const PaymentIssue = () => {
           <label className="block text-sm font-medium text-gray-700 mb-3">
             What was the issue? (Optional)
           </label>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {commonIssues.map((issue) => (
               <label
                 key={issue.id}

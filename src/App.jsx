@@ -11,6 +11,9 @@ import { AuthProvider } from "./context/AuthContext";
 
 const App = () => {
   const [promoBannerVisible, setPromoBannerVisible] = useState(false);
+  const onSignIn = () => {
+    window.location.href = "/auth";
+  };
 
   return (
     <AuthProvider>
@@ -50,12 +53,15 @@ const App = () => {
       >
         {/* Persistent sidebar on large screens */}
         <div className="hidden lg:block">
-          <Sidebar promoBannerVisible={promoBannerVisible} />
+          <Sidebar
+            promoBannerVisible={promoBannerVisible}
+            onSignIn={onSignIn}
+          />
         </div>
 
         {/* Main Content Area */}
         <div className="flex-1 lg:ml-72">
-          <Navbar promoBannerVisible={promoBannerVisible} />
+          <Navbar promoBannerVisible={promoBannerVisible} onSignIn={onSignIn} />
           <main
             className={`flex-1  transition-all ${
               promoBannerVisible ? "pt-20" : "pt-19"

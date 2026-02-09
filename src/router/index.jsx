@@ -30,33 +30,33 @@ const router = createBrowserRouter([
       {
         path: "checkout",
         element: (
-          // <ProtectedRoute>
-          <Checkout />
-          // </ProtectedRoute>
+          <ProtectedRoute>
+            <Checkout />
+          </ProtectedRoute>
         ),
       },
       {
         path: "orders",
         element: (
-          // <ProtectedRoute>
-          <Orders />
-          // </ProtectedRoute>
+          <ProtectedRoute>
+            <Orders />
+          </ProtectedRoute>
         ),
       },
       {
         path: "order/:orderId",
         element: (
-          // <ProtectedRoute>
-          <OrderDetail />
-          // </ProtectedRoute>
+          <ProtectedRoute>
+            <OrderDetail />
+          </ProtectedRoute>
         ),
       },
       {
         path: "wishlist",
         element: (
-          // <ProtectedRoute>
-          <SavedProducts />
-          // </ProtectedRoute>
+          <ProtectedRoute>
+            <SavedProducts />
+          </ProtectedRoute>
         ),
       },
       { path: "order-success", element: <OrderSuccess /> },

@@ -12,17 +12,15 @@ const PaystackPayment = ({ amount, email, orderData }) => {
 
   const ready = usePaystackScript();
   const { pay } = usePaystackPayment();
-
-  const { clearCart } = useCart();
   const { createOrder, verifyPayment } = useOrder();
+  const { clearCart } = useCart();
   const navigate = useNavigate();
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!ready) {
       toast.error("Payment system loading");
       return;
     }
-
     if (!email || amount <= 0) {
       toast.error("Invalid payment details");
       return;
@@ -31,76 +29,86 @@ const PaystackPayment = ({ amount, email, orderData }) => {
     setLoading(true);
 
     // Generate a unique reference
-    const reference = `PSK-${Date.now()}-${Math.random()
-      .toString(36)
-      .slice(2, 8)}`;
+    const reference = `PSK-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
+    // 1️⃣ Create order immediately before verification
+    let order;
+    let payment;
+    try {
+      const result = await createOrder({
+        ...orderData,
+        paymentMethod: "paystack",
+        paymentReference: reference,
+        paymentStatus: "pending",
+        amount,
+      });
+      order = result?.data?.order;
+      console.log(result?.data?.order);
+
+      payment = result?.data?.payment;
+      if (!order?.id) throw new Error("Order creation failed");
+    } catch (err) {
+      console.log(err);
+
+      setLoading(false);
+      toast.error(err?.message || "Failed to create order. Try again.");
+      return;
+    }
+
+    // 2️⃣ Start Paystack payment
     pay({
       amount,
       email,
       reference,
-
       onSuccess: async (paystackResponse) => {
         try {
-          // CRITICAL: Verify payment on backend before creating order
+          // Verify payment after the order exists
           const verificationResult = await verifyPayment(
-            paystackResponse.reference
+            paystackResponse.reference,
           );
 
-          if (!verificationResult?.data?.verified) {
-            throw new Error("Payment verification failed");
-          }
-
-          // Only create order after backend confirms payment
-          const result = await createOrder({
-            ...orderData,
-            paymentMethod: "paystack",
-            paymentReference: paystackResponse.reference,
-            paymentStatus: "paid",
-            amount: verificationResult.data.amount / 100, // Convert from kobo
-          });
-
-          const order = result?.data?.order;
-          if (!order?._id) {
-            throw new Error("Order creation failed");
+          if (verificationResult?.data?.verified) {
+            toast.success("Payment verified successfully");
+          } else {
+            toast.error(
+              "Payment could not be verified. Please contact support.",
+            );
           }
 
           clearCart?.();
-          toast.success("Payment successful");
 
+          // Navigate to order success page regardless
           navigate("/order-success", {
             state: {
               orderId: order._id,
               orderNumber: order.orderNumber,
-              amount: verificationResult.data.amount / 100,
+              amount,
               paymentMethod: "paystack",
               reference: paystackResponse.reference,
             },
           });
         } catch (err) {
-          console.error("Payment processing error:", err);
+          console.error("Payment verification error:", err);
           toast.error(
-            err.message || "Payment verified but order failed. Contact support."
+            "Payment processed but verification failed. Contact support.",
           );
-
-          // Navigate to a support page with payment reference
-          navigate("/payment-issue", {
+          navigate("/order-success", {
             state: {
-              reference: paystackResponse.reference,
+              orderId: order._id,
+              orderNumber: order.orderNumber,
               amount,
-              email,
+              paymentMethod: "paystack",
+              reference: paystackResponse.reference,
             },
           });
         } finally {
           setLoading(false);
         }
       },
-
       onClose: () => {
         setLoading(false);
         toast("Payment cancelled");
       },
-
       onError: (error) => {
         setLoading(false);
         console.error("Paystack error:", error);
@@ -109,13 +117,11 @@ const PaystackPayment = ({ amount, email, orderData }) => {
     });
   };
 
-  const disabled = loading || !ready || !email || amount <= 0;
-
   return (
     <button
       onClick={handlePayment}
-      disabled={disabled}
-      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold py-4 rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 transition-all shadow-lg flex items-center justify-center gap-3"
+      disabled={loading || !ready || !email || amount <= 0}
+      className="w-full bg-linear-to-r from-purple-600 to-blue-600 text-white font-semibold py-4 rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 transition-all shadow-lg flex items-center justify-center gap-3"
     >
       {loading ? (
         <>

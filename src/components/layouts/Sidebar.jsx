@@ -316,17 +316,15 @@ const UserMenu = ({
 const Sidebar = ({
   onClose,
   onSignOut,
+  onSignIn,
   wishlistCount = 6,
   promoBannerVisible,
 }) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const prevPathnameRef = useRef(pathname);
-  const onSignIn = () => {
-    window.location.href = "/auth";
-  };
 
-  const { user, loading } = useAuth();
+  const { user, loading, isBooting } = useAuth();
   console.log(user);
 
   useEffect(() => {
@@ -412,11 +410,11 @@ const Sidebar = ({
           wishlistCount={wishlistCount}
           notificationsCount={6}
           onSignOut={onSignOut}
-          loading={loading.init}
+          loading={isBooting}
         />
 
         <UserSection
-          loading={loading.init}
+          loading={isBooting}
           user={user}
           userName={user?.name || "Guest"}
           onSignIn={onSignIn}

@@ -1,15 +1,22 @@
 import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import FullScreenLoader from "../components/others/FullScreenLoader";
 
-export default function ProtectedRoute({ children, adminOnly = false }) {
-  const user = JSON.parse(localStorage.getItem("user"));
+export default function ProtectedRoute({ children }) {
+  const { status, user, isBooting } = useAuth();
   const location = useLocation();
 
-  if (!user) {
-    return <Navigate to="/auth/login" state={{ from: location }} replace />;
+  if (isBooting || status === "booting") {
+    return (
+      <FullScreenLoader
+        message="Processing User"
+        isLoading={isBooting || status === "booting"}
+      />
+    );
   }
 
-  if (adminOnly && !user.isAdmin) {
-    return <Navigate to="/" replace />;
+  if (status === "unauthenticated") {
+    return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
   return children;

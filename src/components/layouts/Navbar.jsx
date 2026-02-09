@@ -21,8 +21,6 @@ import { useAuth } from "../../hooks/useAuth";
 import UserMenu from "../../section/navbar/UserMenu";
 
 const Navbar = ({
-  isAuthenticated = true,
-  // userName = "Guest",
   onCartClick,
   onSignIn,
   logo = "ShopVerse",
@@ -37,7 +35,7 @@ const Navbar = ({
   const [searchFocused, setSearchFocused] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
 
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, isAuthenticated, isBooting } = useAuth();
 
   const categoryRef = useRef(null);
   const userMenuRef = useRef(null);
@@ -267,7 +265,7 @@ const Navbar = ({
                                 .filter((s) =>
                                   s.text
                                     .toLowerCase()
-                                    .includes(searchQuery.toLowerCase())
+                                    .includes(searchQuery.toLowerCase()),
                                 )
                                 .slice(0, 5)
                                 .map((suggestion, idx) => (
@@ -276,7 +274,7 @@ const Navbar = ({
                                     onClick={() =>
                                       handleSuggestionClick(
                                         suggestion.text,
-                                        suggestion.href
+                                        suggestion.href,
                                       )
                                     }
                                     className="w-full text-left px-4 py-3 hover:bg-red-50 rounded-lg text-sm text-gray-700 flex items-center gap-3 transition-colors group"
@@ -317,7 +315,7 @@ const Navbar = ({
                                     onClick={() =>
                                       handleSuggestionClick(
                                         suggestion.text,
-                                        suggestion.href
+                                        suggestion.href,
                                       )
                                     }
                                     className="w-full text-left px-3 py-2.5 hover:bg-gray-50 rounded-lg text-sm text-gray-700 flex items-center gap-3 group"
@@ -345,7 +343,7 @@ const Navbar = ({
                                     onClick={() =>
                                       handleSuggestionClick(
                                         suggestion.text,
-                                        suggestion.href
+                                        suggestion.href,
                                       )
                                     }
                                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-red-100 text-gray-700 hover:text-red-700 rounded-full text-sm transition-colors group"
@@ -485,7 +483,8 @@ const Navbar = ({
                 userMenuRef={userMenuRef}
                 wishlistCount={wishlistCount}
                 user={user}
-                loading={loading.init}
+                loading={loading}
+                isBooting={isBooting}
               />
 
               {/* Enhanced Cart Button */}

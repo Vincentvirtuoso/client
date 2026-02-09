@@ -71,7 +71,7 @@ const Checkout = () => {
       "postalCode",
     ];
     const missingFields = requiredFields.filter(
-      (field) => !form[field]?.trim()
+      (field) => !form[field]?.trim(),
     );
 
     if (missingFields.length > 0) {
@@ -125,29 +125,7 @@ const Checkout = () => {
     };
   };
 
-  const handlePaystackSuccess = async (reference) => {
-    try {
-      // Update order with payment reference
-      // You might want to store the order temporarily and update it
-      console.log("Payment successful, reference:", reference);
-
-      // Navigate to success page
-      navigate("/order-success", {
-        state: {
-          orderNumber: `ORD-${Date.now()}`,
-          amount: grandTotal,
-          paymentMethod: "paystack",
-          estimatedDelivery: getEstimatedDelivery(),
-        },
-      });
-    } catch (error) {
-      console.log(error);
-
-      toast.error("Payment verification failed");
-      setIsProcessing(false);
-    }
-  };
-
+  const orderData = prepareOrderData();
   const handlePlaceOrder = async () => {
     if (!validateForm()) return;
     if (items.length === 0) {
@@ -158,8 +136,6 @@ const Checkout = () => {
     setIsProcessing(true);
 
     try {
-      const orderData = prepareOrderData();
-
       if (paymentMethod === "paystack") {
         // For Paystack, you'll handle payment first
         // The order will be created after successful payment via webhook
@@ -510,7 +486,7 @@ const Checkout = () => {
                 <PaystackPayment
                   amount={grandTotal}
                   email={form.email}
-                  onSuccess={handlePaystackSuccess}
+                  orderData={orderData}
                   onClose={() => setIsProcessing(false)}
                 />
               </div>

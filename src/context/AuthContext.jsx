@@ -1,4 +1,4 @@
-import { createContext, useReducer, useEffect, useCallback } from "react";
+import { createContext, useReducer, useEffect, useRef } from "react";
 import { useApi } from "../hooks/useApi";
 import {
   setUnauthorizedLogoutHandler,
@@ -9,10 +9,8 @@ export const AuthContext = createContext(null);
 
 const initialState = {
   user: null,
-
   status: "booting",
   loading: {
-    init: true,
     login: false,
     register: false,
     logout: false,
@@ -20,24 +18,16 @@ const initialState = {
     verifyEmail: false,
     resendVerification: false,
   },
-
   error: null,
 };
 
 function authReducer(state, action) {
   switch (action.type) {
-    case "INIT_START":
+    case "BOOT_SUCCESS":
       return {
         ...state,
-        loading: { ...state.loading, init: true },
-      };
-
-    case "INIT_SUCCESS":
-      return {
-        ...state,
-        user: action.payload ?? null,
+        user: action.payload,
         status: action.payload ? "authenticated" : "unauthenticated",
-        loading: { ...state.loading, init: false },
       };
 
     case "SET_USER":
@@ -57,21 +47,20 @@ function authReducer(state, action) {
     case "ACTION_START":
       return {
         ...state,
-        loading: { ...state.loading, [action.action]: true },
+        loading: { ...state.loading, [action.key]: true },
         error: null,
       };
 
     case "ACTION_END":
       return {
         ...state,
-        loading: { ...state.loading, [action.action]: false },
+        loading: { ...state.loading, [action.key]: false },
       };
 
     case "ERROR":
       return {
         ...state,
         error: action.payload,
-        status: "error",
       };
 
     default:
@@ -83,24 +72,31 @@ export const AuthProvider = ({ children }) => {
   const { callApi } = useApi();
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  const start = (action) => dispatch({ type: "ACTION_START", action });
-
-  const end = (action) => dispatch({ type: "ACTION_END", action });
-
-  const initializeAuth = useCallback(async () => {
-    dispatch({ type: "INIT_START" });
-
-    try {
-      const data = await callApi({ endpoint: "auth/me", method: "GET" });
-      dispatch({ type: "INIT_SUCCESS", payload: data?.user ?? null });
-    } catch {
-      dispatch({ type: "INIT_SUCCESS", payload: null });
-    }
-  }, [callApi]);
+  const bootstrapped = useRef(false);
 
   useEffect(() => {
-    initializeAuth();
-  }, [initializeAuth]);
+    if (bootstrapped.current) return;
+    bootstrapped.current = true;
+
+    (async () => {
+      try {
+        const res = await callApi({
+          endpoint: "auth/me",
+          method: "GET",
+        });
+
+        dispatch({
+          type: "BOOT_SUCCESS",
+          payload: res?.user ?? null,
+        });
+      } catch {
+        dispatch({
+          type: "BOOT_SUCCESS",
+          payload: null,
+        });
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     setUnauthorizedLogoutHandler(() => {
@@ -108,95 +104,92 @@ export const AuthProvider = ({ children }) => {
     });
 
     setRefreshHandler(async () => {
-      start("refresh");
+      dispatch({ type: "ACTION_START", key: "refresh" });
 
       try {
-        const data = await callApi({
+        const res = await callApi({
           endpoint: "auth/refresh-token",
           method: "POST",
         });
-        if (data?.data?.user) {
-          dispatch({ type: "SET_USER", payload: data.data.user });
+
+        if (res?.data?.user) {
+          dispatch({ type: "SET_USER", payload: res.data.user });
         }
-        return data;
+
+        return res;
       } finally {
-        end("refresh");
+        dispatch({ type: "ACTION_END", key: "refresh" });
       }
     });
-  }, [callApi]);
+  }, []);
 
-  const login = async (payload) => {
-    start("login");
+  const runAction = async (key, fn) => {
+    dispatch({ type: "ACTION_START", key });
     try {
-      const data = await callApi({
+      return await fn();
+    } finally {
+      dispatch({ type: "ACTION_END", key });
+    }
+  };
+
+  const login = (payload) =>
+    runAction("login", async () => {
+      const res = await callApi({
         endpoint: "auth/login",
         method: "POST",
         body: payload,
       });
-      if (data?.data?.user) {
-        dispatch({ type: "SET_USER", payload: data.data.user });
-      }
-      return data;
-    } finally {
-      end("login");
-    }
-  };
 
-  const register = async (payload) => {
-    start("register");
-    try {
-      const data = await callApi({
+      if (res?.data?.user) {
+        dispatch({ type: "SET_USER", payload: res.data.user });
+      }
+
+      return res;
+    });
+
+  const register = (payload) =>
+    runAction("register", async () => {
+      const res = await callApi({
         endpoint: "auth/register",
         method: "POST",
         body: payload,
       });
-      if (data?.user) {
-        dispatch({ type: "SET_USER", payload: data.user });
+
+      if (res?.user) {
+        dispatch({ type: "SET_USER", payload: res.user });
       }
-      return data;
-    } finally {
-      end("register");
-    }
-  };
 
-  const logout = async () => {
-    start("logout");
-    try {
+      return res;
+    });
+
+  const logout = () =>
+    runAction("logout", async () => {
       await callApi({ endpoint: "auth/logout", method: "POST" });
-    } finally {
       dispatch({ type: "LOGOUT" });
-      end("logout");
-    }
-  };
+    });
 
-  const verifyEmail = async (token, email) => {
-    start("verifyEmail");
-    try {
-      const data = await callApi({
+  const verifyEmail = (token, email) =>
+    runAction("verifyEmail", async () => {
+      const res = await callApi({
         endpoint: `auth/verify-email?token=${token}&email=${email}`,
         method: "GET",
       });
-      if (data?.user) {
-        dispatch({ type: "SET_USER", payload: data.user });
-      }
-      return data;
-    } finally {
-      end("verifyEmail");
-    }
-  };
 
-  const resendVerificationEmail = async (email) => {
-    start("resendVerification");
-    try {
-      return await callApi({
+      if (res?.user) {
+        dispatch({ type: "SET_USER", payload: res.user });
+      }
+
+      return res;
+    });
+
+  const resendVerificationEmail = (email) =>
+    runAction("resendVerification", () =>
+      callApi({
         endpoint: "auth/resend-verification",
         method: "POST",
         body: { email },
-      });
-    } finally {
-      end("resendVerification");
-    }
-  };
+      }),
+    );
 
   const value = {
     user: state.user,
@@ -204,7 +197,7 @@ export const AuthProvider = ({ children }) => {
     error: state.error,
 
     isAuthenticated: state.status === "authenticated",
-    isBooting: state.loading.init,
+    isBooting: state.status === "booting",
 
     loading: state.loading,
 

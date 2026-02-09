@@ -13,13 +13,12 @@ import {
   LuSettings as Settings,
   LuChevronRight,
   LuChevronDown,
-  LuLogIn,
   LuCircleHelp,
   LuBell,
   LuCircleAlert,
-  LuShield,
-  LuCreditCard,
   LuStar,
+  LuBadgeAlert,
+  LuLogIn,
 } from "react-icons/lu";
 import { motion, AnimatePresence } from "framer-motion";
 import { NavLink } from "react-router-dom";
@@ -34,7 +33,7 @@ const UserMenu = ({
   notificationCount = 0,
   onSignOut = () => {},
   user = null,
-  loading = false,
+  isBooting,
   className = "",
 }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -145,7 +144,7 @@ const UserMenu = ({
         bgColor: "bg-indigo-50",
       },
     ],
-    [orderCount, wishlistCount, notificationCount]
+    [orderCount, wishlistCount, notificationCount],
   );
 
   // Get user initial
@@ -153,11 +152,11 @@ const UserMenu = ({
     if (userInitial) return userInitial.charAt(0).toUpperCase();
     if (userName) return userName.charAt(0).toUpperCase();
     if (user?.fullName) return user.fullName.charAt(0).toUpperCase();
-    return "U";
+    return <LuBadgeAlert />;
   }, [userInitial, userName, user]);
 
   // Loading state
-  if (loading) {
+  if (isBooting) {
     return (
       <div className="flex items-center gap-2 p-2">
         <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
@@ -172,17 +171,15 @@ const UserMenu = ({
       <button
         onClick={onSignIn}
         className={`
-          hidden sm:flex items-center gap-2 px-4 py-2.5
-          text-gray-700 border border-gray-300 rounded-lg
-          hover:border-red-600 hover:text-red-600
-          transition-all duration-200 font-medium text-sm
-          hover:shadow-md active:scale-95
-          focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
+          flex items-center gap-2 px-1 py-2
+          text-gray-700
+         hover:text-red-600
+          transition-all duration-200 font-medium text-sm active:scale-95
+           cursor-pointer
           ${className}
         `}
         aria-label="Sign in to your account"
       >
-        <User className="w-4 h-4" />
         Sign In
       </button>
     );
