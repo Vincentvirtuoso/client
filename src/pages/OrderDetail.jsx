@@ -27,6 +27,11 @@ const OrderDetail = () => {
       icon: "FiClock",
       color: "bg-yellow-500",
     },
+    success: {
+      text: "Success",
+      icon: "FiCheckCircle",
+      color: "bg-green-500",
+    },
     confirmed: {
       text: "Confirmed",
       icon: "FiCheckCircle",
@@ -69,30 +74,30 @@ const OrderDetail = () => {
     },
   };
 
+  const loadOrder = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchOrderById(orderId);
+      setOrder(data);
+      setError(null);
+    } catch (err) {
+      console.error("Error loading order:", err);
+      setError(err.message || "Failed to load order details");
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const loadOrder = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchOrderById(orderId);
-        setOrder(data);
-        setError(null);
-      } catch (err) {
-        console.error("Error loading order:", err);
-        setError(err.message || "Failed to load order details");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (orderId) {
       loadOrder();
     }
-  }, [orderId, fetchOrderById]);
+  }, []);
 
-  // Get icon component from string
-  const getIconComponent = (iconName) => {
-    const Icon = Icons[iconName];
-    return Icon || FiPackage;
+  const getIconComponent = (status) => {
+    const normalizedStatus = status?.toLowerCase();
+    const IconName = statusConfig[normalizedStatus]?.icon;
+
+    return Icons[IconName] || FiPackage;
   };
 
   // Handle order cancellation
@@ -148,12 +153,20 @@ const OrderDetail = () => {
             >
               Back to Orders
             </button>
+            {(error === "Something went wrong" ||
+              error === "Network Error") && (
+              <button
+                onClick={loadOrder}
+                className="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                Try Again
+              </button>
+            )}
           </div>
         </div>
       </div>
     );
   }
-  console.log(order);
 
   const StatusIcon = getIconComponent(statusConfig[order.status]?.icon);
   const statusColor = statusConfig[order.status]?.color || "bg-gray-500";
@@ -189,7 +202,7 @@ const OrderDetail = () => {
 
               {/* Cancel button for pending orders */}
               {["pending", "confirmed", "processing"].includes(
-                order.status
+                order.status,
               ) && (
                 <button
                   onClick={handleCancelOrder}
@@ -245,7 +258,7 @@ const OrderDetail = () => {
                     <div className="text-right">
                       <p className="font-semibold text-gray-900">
                         {formatCurrency(
-                          (item.price?.unit || 0) * item.quantity
+                          (item.price?.unit || 0) * item.quantity,
                         )}
                       </p>
                       {item.tax?.amount && item.tax.amount > 0 && (
@@ -312,12 +325,13 @@ const OrderDetail = () => {
               </h2>
               <div className="space-y-4">
                 {order.statusHistory?.map((history, index) => {
-                  const HistoryIcon = getIconComponent(
-                    statusConfig[history.status]?.icon
-                  );
+                  const normalizedStatus = history.status?.toLowerCase();
+                  const HistoryIcon = getIconComponent(history.status);
                   return (
                     <div key={index} className="flex items-start space-x-3">
-                      <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
+                      <div
+                        className={`w-2 h-2 ${statusConfig[normalizedStatus]?.color || "bg-red-500"} rounded-full mt-2`}
+                      ></div>
                       <div className="flex-1">
                         <div className="flex items-center">
                           {HistoryIcon && (
@@ -407,8 +421,8 @@ const OrderDetail = () => {
                       order.payment?.status === "paid"
                         ? "text-green-600"
                         : order.payment?.status === "failed"
-                        ? "text-red-600"
-                        : "text-yellow-600"
+                          ? "text-red-600"
+                          : "text-yellow-600"
                     }`}
                   >
                     {order.payment?.status || "N/A"}
@@ -443,10 +457,16 @@ const OrderDetail = () => {
                   <span className="text-gray-600">Order Placed</span>
                   <span>{formatDate(order.dates?.placedAt)}</span>
                 </div>
-                {order.dates?.paidAt && (
+                {order.dates?.paymentProcessedAt && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Payment Processed</span>
+                    <span>{formatDate(order.dates.paymentProcessedAt)}</span>
+                  </div>
+                )}
+                {order.dates?.confirmedAt && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Payment Confirmed</span>
-                    <span>{formatDate(order.dates.paidAt)}</span>
+                    <span>{formatDate(order.dates.confirmedAt)}</span>
                   </div>
                 )}
                 {order.dates?.processedAt && (
@@ -488,7 +508,7 @@ const OrderDetail = () => {
                       <button
                         onClick={() =>
                           alert(
-                            "Download invoice functionality to be implemented"
+                            "Download invoice functionality to be implemented",
                           )
                         }
                         className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
@@ -498,7 +518,7 @@ const OrderDetail = () => {
                       <button
                         onClick={() =>
                           alert(
-                            "Request return functionality to be implemented"
+                            "Request return functionality to be implemented",
                           )
                         }
                         className="w-full px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors"
@@ -511,7 +531,7 @@ const OrderDetail = () => {
                     <button
                       onClick={() =>
                         alert(
-                          "View refund details functionality to be implemented"
+                          "View refund details functionality to be implemented",
                         )
                       }
                       className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"

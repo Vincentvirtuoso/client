@@ -1,26 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-
-import { useCart } from "../../hooks/useCart";
+import { v4 as uuidv4 } from "uuid";
 import { useOrder } from "../../hooks/useOrder";
-import { usePaystackScript } from "../../hooks/usePaystackScript";
-import { usePaystackPayment } from "../../hooks/usePaystackPayment";
 
-const PaystackPayment = ({ amount, email, orderData }) => {
+const PaystackPayment = ({ amount, email, prepareOrderData }) => {
   const [loading, setLoading] = useState(false);
-
-  const ready = usePaystackScript();
-  const { pay } = usePaystackPayment();
-  const { createOrder, verifyPayment } = useOrder();
-  const { clearCart } = useCart();
-  const navigate = useNavigate();
+  const { createOrder } = useOrder();
 
   const handlePayment = async () => {
-    if (!ready) {
-      toast.error("Payment system loading");
-      return;
-    }
     if (!email || amount <= 0) {
       toast.error("Invalid payment details");
       return;
@@ -28,14 +15,21 @@ const PaystackPayment = ({ amount, email, orderData }) => {
 
     setLoading(true);
 
-  const [reference] = useState(() => 
-    `PSK-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  );
+    // ✅ Generate fresh reference for each payment attempt
+    const timestamp = Date.now();
+    const reference = `PSK-${uuidv4()}-${timestamp}`;
 
-    // 1️⃣ Create order immediately before verification
-    let order;
-    let payment;
+    // ✅ Get order data from parent
+    const orderData = prepareOrderData ? prepareOrderData() : null;
+
+    if (!orderData) {
+      setLoading(false);
+      toast.error("Failed to prepare order data");
+      return;
+    }
+
     try {
+      // ✅ Backend creates order AND initializes Paystack payment
       const result = await createOrder({
         ...orderData,
         paymentMethod: "paystack",
@@ -43,96 +37,52 @@ const PaystackPayment = ({ amount, email, orderData }) => {
         paymentStatus: "pending",
         amount,
       });
-      order = result?.data?.order;
-      console.log(result?.data?.order);
 
-      payment = result?.data?.payment;
-      if (!order?.id) throw new Error("Order creation failed");
+      const order = result?.data?.order;
+      const payment = result?.data?.payment;
+
+      console.log("Order created:", order);
+      console.log("Payment data:", payment);
+
+      if (!order?.id) {
+        throw new Error("Order creation failed");
+      }
+
+      // ✅ Redirect to Paystack's hosted payment page
+      if (payment?.authorization_url) {
+        // Store order info in sessionStorage for the callback page
+        sessionStorage.setItem(
+          "pendingOrder",
+          JSON.stringify({
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            amount,
+            reference: payment.reference,
+          }),
+        );
+
+        // Redirect to Paystack
+        window.location.href = payment.authorization_url;
+      } else {
+        throw new Error("Payment URL not generated");
+      }
     } catch (err) {
-      console.log(err);
-
+      console.error("Order creation error:", err);
       setLoading(false);
       toast.error(err?.message || "Failed to create order. Try again.");
-      return;
     }
-
-    // 2️⃣ Start Paystack payment
-    pay({
-      amount,
-      email,
-      reference,
-      onSuccess: async (paystackResponse) => {
-        try {
-          // Verify payment after the order exists
-          const verificationResult = await verifyPayment(
-            paystackResponse.reference,
-          );
-
-          if (verificationResult?.data?.verified) {
-            toast.success("Payment verified successfully");
-          } else {
-            toast.error(
-              "Payment could not be verified. Please contact support.",
-            );
-          }
-
-          clearCart?.();
-
-          // Navigate to order success page regardless
-          navigate("/order-success", {
-            state: {
-              orderId: order._id,
-              orderNumber: order.orderNumber,
-              amount,
-              paymentMethod: "paystack",
-              reference: paystackResponse.reference,
-            },
-          });
-        } catch (err) {
-          console.error("Payment verification error:", err);
-          toast.error(
-            "Payment processed but verification failed. Contact support.",
-          );
-          navigate("/order-success", {
-            state: {
-              orderId: order._id,
-              orderNumber: order.orderNumber,
-              amount,
-              paymentMethod: "paystack",
-              reference: paystackResponse.reference,
-            },
-          });
-        } finally {
-          setLoading(false);
-        }
-      },
-      onClose: () => {
-        setLoading(false);
-        toast("Payment cancelled");
-      },
-      onError: (error) => {
-        setLoading(false);
-        console.error("Paystack error:", error);
-        toast.error("Payment failed. Please try again.");
-      },
-    });
   };
 
   return (
     <button
       onClick={handlePayment}
-      disabled={loading || !ready || !email || amount <= 0}
+      disabled={loading || !email || amount <= 0}
       className="w-full bg-linear-to-r from-purple-600 to-blue-600 text-white font-semibold py-4 rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 transition-all shadow-lg flex items-center justify-center gap-3"
     >
       {loading ? (
         <>
           <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
           Processing...
-        </>
-      ) : !ready ? (
-        <>
-          <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          Loading...
         </>
       ) : (
         <>Pay ₦{amount.toLocaleString()} with Paystack</>

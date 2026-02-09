@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useCart from "../hooks/useCart";
 import { LuTruck, LuCreditCard, LuWallet, LuShield } from "react-icons/lu";
@@ -6,6 +6,7 @@ import { FiLock } from "react-icons/fi";
 import toast from "react-hot-toast";
 import PaystackPayment from "../components/payments/PaystackPayment";
 import { useOrder } from "../hooks/useOrder";
+import ShippingForm from "../section/checkout/ShippingForm";
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -92,6 +93,77 @@ const Checkout = () => {
     return true;
   };
 
+  const [saveShippingInfo, setSaveShippingInfo] = useState(false);
+  const [savedShippingInfo, setSavedShippingInfo] = useState(null);
+
+  // Initialize form with saved data on component mount
+  useEffect(() => {
+    loadSavedShippingInfoFromStorage();
+  }, []);
+
+  // Load saved shipping info from localStorage
+  const loadSavedShippingInfoFromStorage = () => {
+    try {
+      const saved = localStorage.getItem("shippingInfo");
+      if (saved) {
+        const parsedInfo = JSON.parse(saved);
+        setSavedShippingInfo(parsedInfo);
+
+        // Optionally auto-fill if you want
+        // setForm(prev => ({ ...prev, ...parsedInfo }));
+      }
+    } catch (error) {
+      console.error("Error loading saved shipping info:", error);
+    }
+  };
+
+  // Load saved info into form
+  const loadSavedShippingInfo = () => {
+    if (savedShippingInfo) {
+      setForm((prev) => ({
+        ...prev,
+        ...savedShippingInfo,
+      }));
+      toast.success("Saved shipping information loaded!");
+    }
+  };
+
+  // Save shipping info to localStorage
+  const saveShippingInfoToStorage = () => {
+    if (!saveShippingInfo) return;
+
+    try {
+      const infoToSave = {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        phone: form.phone,
+        addressLine1: form.addressLine1,
+        addressLine2: form.addressLine2,
+        city: form.city,
+        state: form.state,
+        postalCode: form.postalCode,
+        country: form.country,
+        instructions: form.instructions,
+        savedAt: new Date().toISOString(),
+      };
+
+      localStorage.setItem("shippingInfo", JSON.stringify(infoToSave));
+      setSavedShippingInfo(infoToSave);
+      toast.success("Shipping information saved for future orders!");
+    } catch (error) {
+      console.error("Error saving shipping info:", error);
+      toast.error("Failed to save shipping information");
+    }
+  };
+
+  // Clear saved shipping info
+  const clearSavedShippingInfo = () => {
+    localStorage.removeItem("shippingInfo");
+    setSavedShippingInfo(null);
+    toast.success("Saved shipping information cleared!");
+  };
+
   const prepareOrderData = () => {
     // Transform cart items to match backend format
     const orderItems = items.map((item) => ({
@@ -111,7 +183,7 @@ const Checkout = () => {
         country: form.country,
       },
       paymentMethod,
-      discountCode: null, // You can add coupon logic here
+      discountCode: null,
       notes: form.instructions || "",
       billingAddress: selectedAddress?.isBillingDifferent
         ? {
@@ -125,15 +197,19 @@ const Checkout = () => {
     };
   };
 
-  const orderData = prepareOrderData();
   const handlePlaceOrder = async () => {
     if (!validateForm()) return;
     if (items.length === 0) {
       toast.error("Your cart is empty");
       return;
     }
+    const orderData = prepareOrderData();
 
     setIsProcessing(true);
+
+    if (saveShippingInfo) {
+      saveShippingInfoToStorage();
+    }
 
     try {
       if (paymentMethod === "paystack") {
@@ -251,176 +327,15 @@ const Checkout = () => {
           )}
 
           {/* Shipping Information */}
-          <section className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-              <LuTruck className="w-5 h-5" />
-              Shipping Information
-            </h2>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="block">
-                  <span className="text-sm font-medium text-gray-700">
-                    First Name *
-                  </span>
-                  <input
-                    name="firstName"
-                    value={form.firstName}
-                    onChange={handleChange}
-                    placeholder="John"
-                    className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                    required
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="text-sm font-medium text-gray-700">
-                    Last Name *
-                  </span>
-                  <input
-                    name="lastName"
-                    value={form.lastName}
-                    onChange={handleChange}
-                    placeholder="Doe"
-                    className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                    required
-                  />
-                </label>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="block">
-                  <span className="text-sm font-medium text-gray-700">
-                    Email *
-                  </span>
-                  <input
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    placeholder="john@example.com"
-                    className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                    required
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="text-sm font-medium text-gray-700">
-                    Phone *
-                  </span>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={form.phone}
-                    onChange={handleChange}
-                    placeholder="+234 800 000 0000"
-                    className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                    required
-                  />
-                </label>
-              </div>
-
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">
-                  Address Line 1 *
-                </span>
-                <input
-                  name="addressLine1"
-                  value={form.addressLine1}
-                  onChange={handleChange}
-                  placeholder="123 Main Street"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                  required
-                />
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">
-                  Address Line 2 (Optional)
-                </span>
-                <input
-                  name="addressLine2"
-                  value={form.addressLine2}
-                  onChange={handleChange}
-                  placeholder="Apartment 4B, Suite 2"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                />
-              </label>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <label className="block">
-                  <span className="text-sm font-medium text-gray-700">
-                    City *
-                  </span>
-                  <input
-                    name="city"
-                    value={form.city}
-                    onChange={handleChange}
-                    placeholder="Lagos"
-                    className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                    required
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-medium text-gray-700">
-                    State *
-                  </span>
-                  <input
-                    name="state"
-                    value={form.state}
-                    onChange={handleChange}
-                    placeholder="Lagos State"
-                    className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                    required
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-medium text-gray-700">
-                    Postal Code *
-                  </span>
-                  <input
-                    name="postalCode"
-                    value={form.postalCode}
-                    onChange={handleChange}
-                    placeholder="100001"
-                    className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                    required
-                  />
-                </label>
-              </div>
-
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">
-                  Country
-                </span>
-                <select
-                  name="country"
-                  value={form.country}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                >
-                  <option value="Nigeria">Nigeria</option>
-                  <option value="Ghana">Ghana</option>
-                  <option value="Kenya">Kenya</option>
-                  <option value="South Africa">South Africa</option>
-                </select>
-              </label>
-
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">
-                  Delivery Instructions (Optional)
-                </span>
-                <textarea
-                  name="instructions"
-                  value={form.instructions}
-                  onChange={handleChange}
-                  placeholder="Leave at the gate, call before delivery, etc."
-                  rows="3"
-                  className="mt-1 block w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
-                />
-              </label>
-            </div>
-          </section>
+          <ShippingForm
+            form={form}
+            handleChange={handleChange}
+            saveShippingInfo={saveShippingInfo}
+            savedShippingInfo={savedShippingInfo}
+            setSaveShippingInfo={setSaveShippingInfo}
+            loadSavedShippingInfo={loadSavedShippingInfo}
+            clearSavedShippingInfo={clearSavedShippingInfo}
+          />
 
           {/* Payment Method */}
           <section className="bg-white rounded-2xl shadow-lg p-6">
@@ -486,7 +401,7 @@ const Checkout = () => {
                 <PaystackPayment
                   amount={grandTotal}
                   email={form.email}
-                  orderData={orderData}
+                  prepareOrderData={prepareOrderData}
                   onClose={() => setIsProcessing(false)}
                 />
               </div>

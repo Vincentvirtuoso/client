@@ -17,6 +17,7 @@ import OrderDetail from "../pages/OrderDetail";
 import VerifyEmail from "../pages/auth/VerifyEmail";
 import VerifyEmailNotice from "../pages/auth/VerifyEmailNotice";
 import PaymentIssue from "../pages/PaymentIssue";
+import PaymentCallback from "../pages/PaymentCallback";
 
 const router = createBrowserRouter([
   {
@@ -40,6 +41,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <Orders />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/payment/callback",
+        element: (
+          <ProtectedRoute>
+            <PaymentCallback />
           </ProtectedRoute>
         ),
       },

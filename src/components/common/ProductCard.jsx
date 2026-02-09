@@ -26,13 +26,16 @@ const Star = ({ rating }) => {
 
   for (let i = 0; i < fullStars; i++) {
     stars.push(
-      <LuStar key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+      <LuStar key={i} className="w-4 h-4 text-yellow-400 fill-current" />,
     );
   }
 
   if (hasHalfStar) {
     stars.push(
-      <LuStarHalf key="half" className="w-4 h-4 text-yellow-400 fill-current" />
+      <LuStarHalf
+        key="half"
+        className="w-4 h-4 text-yellow-400 fill-current"
+      />,
     );
   }
 
@@ -80,7 +83,7 @@ const ProductCard = ({
   // Memoize derived values
   const displayImages = useMemo(
     () => (images.length > 0 ? images : [image]),
-    [images, image]
+    [images, image],
   );
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -117,7 +120,7 @@ const ProductCard = ({
       hasDiscount
         ? Math.round(((originalPrice - price) / originalPrice) * 100)
         : discount,
-    [hasDiscount, originalPrice, price, discount]
+    [hasDiscount, originalPrice, price, discount],
   );
 
   const handleQuickView = useCallback(
@@ -126,7 +129,7 @@ const ProductCard = ({
       e.stopPropagation();
       onQuickView?.(product);
     },
-    [onQuickView, product]
+    [onQuickView, product],
   );
 
   const handleToggleFavorite = useCallback(
@@ -139,7 +142,7 @@ const ProductCard = ({
         icon: <LuInfo />,
       });
     },
-    [toggleFavorite, product]
+    [toggleFavorite, product],
   );
 
   const handleShare = useCallback(
@@ -148,7 +151,7 @@ const ProductCard = ({
       e.stopPropagation();
       onShare?.(product);
     },
-    [onShare, product]
+    [onShare, product],
   );
 
   const handleCardClick = useCallback(() => {
@@ -162,7 +165,7 @@ const ProductCard = ({
         handleCardClick();
       }
     },
-    [handleCardClick]
+    [handleCardClick],
   );
 
   const handleImageError = useCallback(() => {
@@ -272,7 +275,7 @@ const ProductCard = ({
               -{discountPercentage}%
             </motion.span>
           )}
-          {showStock && !inStock && (
+          {showStock && (!inStock || stockCount === 0) && (
             <span className="bg-gray-600 text-white text-xs font-semibold px-2.5 py-1 rounded-md shadow-lg">
               OUT OF STOCK
             </span>
@@ -349,7 +352,7 @@ const ProductCard = ({
           </div>
         )}
 
-        {showStock && !inStock && (
+        {showStock && (!inStock || stockCount === 0) && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20">
             <span className="text-white text-lg font-bold tracking-wider px-4 py-2 rounded-lg border-2 border-white/80">
               SOLD OUT

@@ -57,15 +57,15 @@ export const usePaystackPayment = () => {
         },
 
         // Additional metadata for tracking
-        metadata: {
-          custom_fields: [
-            {
-              display_name: "Order Reference",
-              variable_name: "order_reference",
-              value: reference,
-            },
-          ],
-        },
+        // metadata: {
+        //   custom_fields: [
+        //     {
+        //       display_name: "Order Reference",
+        //       variable_name: "order_reference",
+        //       value: reference,
+        //     },
+        //   ],
+        // },
       });
 
       handler.openIframe();
