@@ -17,17 +17,39 @@ const ShippingForm = ({
       </h2>
 
       {savedShippingInfo && (
+        <div className="mt-4 p-3 bg-green-50 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-green-600">
+                Saved shipping information available
+              </p>
+              <p className="text-sm text-green-700">
+                {savedShippingInfo.firstName} {savedShippingInfo.lastName} •{" "}
+                {savedShippingInfo.city}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={loadSavedShippingInfo}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+            >
+              Load Info
+            </button>
+          </div>
+        </div>
+      )}
+
+      {savedShippingInfo && (
         <div className="mt-2 flex items-center gap-4">
           <button
             type="button"
             onClick={clearSavedShippingInfo}
             className="text-sm text-red-600 hover:text-red-700 underline"
           >
-            Clear saved shipping information
+            Clear saved information
           </button>
           <span className="text-xs text-gray-500">
-            Last saved:{" "}
-            {new Date(savedShippingInfo.savedAt).toLocaleDateString()}
+            Last saved: {new Date(savedShippingInfo.savedAt).toLocaleString()}
           </span>
         </div>
       )}
@@ -205,30 +227,6 @@ const ShippingForm = ({
               </p>
             </div>
           </label>
-
-          {/* Load saved info button - Only show if there's saved data */}
-          {savedShippingInfo && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-blue-900">
-                    Saved shipping information available
-                  </p>
-                  <p className="text-sm text-blue-700">
-                    {savedShippingInfo.firstName} {savedShippingInfo.lastName} •{" "}
-                    {savedShippingInfo.city}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={loadSavedShippingInfo}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                >
-                  Load Saved Info
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </section>

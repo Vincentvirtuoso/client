@@ -127,6 +127,7 @@ const UserMenu = ({
   user = null,
   wishlistCount = 0,
   notificationsCount = 0,
+  ordersCount = 0,
   onSignOut = () => {},
   menuItems = [],
   customItems = [],
@@ -206,6 +207,7 @@ const UserMenu = ({
       to: "/orders",
       icon: <LuPackage className="w-5 h-5" />,
       type: "link",
+      count: ordersCount || 0,
     },
     {
       id: "wishlist",
@@ -319,12 +321,13 @@ const Sidebar = ({
   onSignIn,
   wishlistCount = 6,
   promoBannerVisible,
+  orders,
 }) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const prevPathnameRef = useRef(pathname);
 
-  const { user, loading, isBooting } = useAuth();
+  const { user, isBooting } = useAuth();
   console.log(user);
 
   useEffect(() => {
@@ -410,6 +413,7 @@ const Sidebar = ({
           wishlistCount={wishlistCount}
           notificationsCount={6}
           onSignOut={onSignOut}
+          ordersCount={orders || 0}
           loading={isBooting}
         />
 

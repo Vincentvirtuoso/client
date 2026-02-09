@@ -8,12 +8,14 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { LuX } from "react-icons/lu";
 import { AuthProvider } from "./context/AuthContext";
+import { useOrder } from "./hooks/useOrder";
 
 const App = () => {
   const [promoBannerVisible, setPromoBannerVisible] = useState(false);
   const onSignIn = () => {
     window.location.href = "/auth";
   };
+  const { orderStats } = useOrder();
 
   return (
     <AuthProvider>
@@ -56,12 +58,17 @@ const App = () => {
           <Sidebar
             promoBannerVisible={promoBannerVisible}
             onSignIn={onSignIn}
+            orders={orderStats.total || 0}
           />
         </div>
 
         {/* Main Content Area */}
         <div className="flex-1 lg:ml-72">
-          <Navbar promoBannerVisible={promoBannerVisible} onSignIn={onSignIn} />
+          <Navbar
+            promoBannerVisible={promoBannerVisible}
+            onSignIn={onSignIn}
+            orders={orderStats.total || 0}
+          />
           <main
             className={`flex-1  transition-all ${
               promoBannerVisible ? "pt-20" : "pt-19"

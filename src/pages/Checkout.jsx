@@ -199,6 +199,9 @@ const Checkout = () => {
 
   const handlePlaceOrder = async () => {
     if (!validateForm()) return;
+    if (saveShippingInfo) {
+      saveShippingInfoToStorage();
+    }
     if (items.length === 0) {
       toast.error("Your cart is empty");
       return;
@@ -206,10 +209,6 @@ const Checkout = () => {
     const orderData = prepareOrderData();
 
     setIsProcessing(true);
-
-    if (saveShippingInfo) {
-      saveShippingInfoToStorage();
-    }
 
     try {
       if (paymentMethod === "paystack") {

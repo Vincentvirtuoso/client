@@ -25,6 +25,7 @@ const Navbar = ({
   onSignIn,
   logo = "ShopVerse",
   promoBannerVisible,
+  orders = 0,
 }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -483,6 +484,7 @@ const Navbar = ({
                 userMenuRef={userMenuRef}
                 wishlistCount={wishlistCount}
                 user={user}
+                orderCount={orders}
                 loading={loading}
                 isBooting={isBooting}
               />

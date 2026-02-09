@@ -77,7 +77,7 @@ const PaystackPayment = ({ amount, email, prepareOrderData }) => {
     <button
       onClick={handlePayment}
       disabled={loading || !email || amount <= 0}
-      className="w-full bg-linear-to-r from-purple-600 to-blue-600 text-white font-semibold py-4 rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50 transition-all shadow-lg flex items-center justify-center gap-3"
+      className="w-full bg-linear-to-r from-cyan-600 to-blue-600 text-white font-semibold py-4 rounded-lg hover:from-cyan-700 hover:to-blue-700 disabled:opacity-50 transition-all shadow-lg flex items-center justify-center gap-3"
     >
       {loading ? (
         <>
