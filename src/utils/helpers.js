@@ -30,6 +30,11 @@ export const getStatusConfig = () => ({
     icon: "FiCheckCircle",
     color: "bg-blue-500",
   },
+  paid: {
+    text: "Paid",
+    icon: "FiCheckCircle",
+    color: "bg-green-500",
+  },
   processing: {
     text: "Processing",
     icon: "FiPackage",

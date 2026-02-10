@@ -35,6 +35,7 @@ const UserMenu = ({
   user = null,
   isBooting,
   className = "",
+  ordersLoading,
 }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -294,7 +295,11 @@ const UserMenu = ({
                 <div className="grid grid-cols-3 gap-2">
                   <div className="text-center">
                     <div className="text-lg font-bold text-gray-900">
-                      {orderCount}
+                      {ordersLoading ? (
+                        <div className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin inline-flex" />
+                      ) : (
+                        orderCount
+                      )}
                     </div>
                     <div className="text-xs text-gray-600">Orders</div>
                   </div>
@@ -347,7 +352,7 @@ const UserMenu = ({
                           {item.label}
                         </span>
                         {hasBadge && (
-                          <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-5 h-5 flex items-center justify-center animate-pulse">
+                          <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-5 h-5 flex items-center justify-center">
                             {badgeValue}
                           </span>
                         )}

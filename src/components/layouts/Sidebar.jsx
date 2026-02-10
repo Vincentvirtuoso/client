@@ -102,12 +102,8 @@ const UserSection = ({
           className={`
             w-full 
             flex items-center justify-center gap-3 
-            px-4 py-3 
-            bg-linear-to-r from-red-600 to-pink-500
-            text-white 
-            rounded-lg 
-            hover:from-red-700 hover:to-pink-600
-            active:from-red-800 active:to-pink-700
+            px-4 py-2.5 rounded-lg 
+            bg-red-600 text-white
             transition-all duration-200
             font-medium
             focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
@@ -137,6 +133,7 @@ const UserMenu = ({
   variant = "default",
   onItemClick = () => {},
   loading = false,
+  menuLoaders = {},
 }) => {
   // Style variants
   const variants = {
@@ -161,6 +158,11 @@ const UserMenu = ({
   };
 
   const currentVariant = variants[variant] || variants.default;
+  const {
+    orders: ordersLoading,
+    wishlist: wishlistLoading = false,
+    notifications: notificationsLoading = false,
+  } = menuLoaders;
 
   if (!user && !loading) return null;
 
@@ -207,7 +209,8 @@ const UserMenu = ({
       to: "/orders",
       icon: <LuPackage className="w-5 h-5" />,
       type: "link",
-      count: ordersCount || 0,
+      count: ordersCount,
+      countsLoading: ordersLoading,
     },
     {
       id: "wishlist",
@@ -216,6 +219,7 @@ const UserMenu = ({
       icon: <LuHeart className="w-5 h-5" />,
       count: wishlistCount,
       type: "link",
+      countsLoading: wishlistLoading,
     },
     {
       id: "notifications",
@@ -224,6 +228,7 @@ const UserMenu = ({
       icon: <LuBell className="w-5 h-5" />,
       count: notificationsCount,
       type: "link",
+      countsLoading: notificationsLoading,
     },
     {
       id: "settings",
@@ -247,12 +252,32 @@ const UserMenu = ({
     },
   ];
 
-  const renderCountBadge = (count) => {
-    if (!count || count <= 0) return null;
+  const renderCountBadge = (count, isLoading = false) => {
+    if (count === undefined || count === null) return null;
 
     return (
-      <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full min-w-[1.25rem] h-5 flex items-center justify-center px-1.5">
-        {count > 99 ? "99+" : count}
+      <span
+        className={`
+      flex items-center justify-center
+      min-w-6 h-6
+      px-1.5
+      text-xs font-medium
+      rounded-full
+      transition-colors duration-200
+      ${
+        isLoading
+          ? "bg-gray-200 dark:bg-gray-700 text-gray-400 animate-pulse"
+          : "bg-red-500 text-white"
+      }
+    `}
+      >
+        {isLoading ? (
+          <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+        ) : count > 99 ? (
+          "99+"
+        ) : (
+          count
+        )}
       </span>
     );
   };
@@ -266,15 +291,7 @@ const UserMenu = ({
     >
       <div className={`px-4 py-3 space-y-1 ${className}`}>
         {allMenuItems.map((item) => {
-          const baseClasses = `
-            flex items-center gap-3
-            px-4 py-2.5
-            rounded-lg
-            transition-all duration-200
-            focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1
-            w-full text-left
-            ${item.className || ""}
-          `;
+          const baseClasses = `flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 w-full text-left ${item.className || ""}`;
 
           if (item.type === "button") {
             return (
@@ -285,10 +302,11 @@ const UserMenu = ({
                   onItemClick(item.id);
                 }}
                 className={`${baseClasses} ${currentVariant.button}`}
+                disabled={item?.countsLoading}
               >
                 {item.icon}
                 <span className="flex-1">{item.label}</span>
-                {renderCountBadge(item.count)}
+                {renderCountBadge(item.count, item?.countsLoading)}
               </button>
             );
           }
@@ -300,13 +318,20 @@ const UserMenu = ({
               className={({ isActive }) =>
                 `${baseClasses} ${
                   isActive ? currentVariant.active : currentVariant.link
-                }`
+                } ${item?.countsLoading ? "opacity-70 cursor-wait" : ""}`
               }
-              onClick={() => onItemClick(item.id)}
+              onClick={(e) => {
+                if (item?.countsLoading) {
+                  e.preventDefault();
+                  return;
+                }
+                onItemClick(item.id);
+              }}
+              aria-disabled={item?.countsLoading}
             >
               {item.icon}
               <span className="flex-1">{item.label}</span>
-              {renderCountBadge(item.count)}
+              {renderCountBadge(item.count, item?.countsLoading)}
             </NavLink>
           );
         })}
@@ -321,7 +346,8 @@ const Sidebar = ({
   onSignIn,
   wishlistCount = 6,
   promoBannerVisible,
-  orders,
+  orders = 0,
+  ordersLoading,
 }) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
@@ -336,6 +362,12 @@ const Sidebar = ({
       prevPathnameRef.current = pathname;
     }
   }, [pathname]);
+
+  const menuLoaders = {
+    orders: ordersLoading,
+    wishlist: false,
+    notifications: false,
+  };
 
   return (
     <>
@@ -415,6 +447,7 @@ const Sidebar = ({
           onSignOut={onSignOut}
           ordersCount={orders || 0}
           loading={isBooting}
+          menuLoaders={menuLoaders}
         />
 
         <UserSection

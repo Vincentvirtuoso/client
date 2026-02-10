@@ -231,10 +231,15 @@ const OrdersPage = () => {
           <div className="divide-y divide-gray-200">
             {orders.map((order) => {
               const StatusIcon = getIconComponent(
-                statusConfig[order.status]?.icon
+                statusConfig[order.status]?.icon,
+              );
+              const PaymentStatusIcon = getIconComponent(
+                statusConfig[order?.payment.status]?.icon,
               );
               const statusColor =
                 statusConfig[order.status]?.color || "bg-gray-500";
+              const paymetStatusColor =
+                statusConfig[order.payment?.status]?.color || "bg-gray-500";
 
               return (
                 <div
@@ -269,7 +274,7 @@ const OrdersPage = () => {
                           <p className="font-medium">
                             {order.items?.reduce(
                               (sum, item) => sum + item.quantity,
-                              0
+                              0,
                             ) || 0}{" "}
                             items
                           </p>
@@ -282,9 +287,15 @@ const OrdersPage = () => {
                         </div>
                         <div>
                           <p className="text-gray-600">Payment</p>
-                          <p className="font-medium capitalize">
+                          <p className="font-medium capitalize flex items-center gap-2">
                             {order.payment?.method?.replace("_", " ") || "N/A"}{" "}
-                            • {order.payment?.status || "N/A"}
+                            <span
+                              className={`flex items-center px-3 py-1.5 rounded-full font-medium ${paymetStatusColor} text-white text-xs`}
+                            >
+                              <PaymentStatusIcon className="w-3 h-3 mr-1" />
+                              {statusConfig[order.payment?.status]?.text ||
+                                order.payment?.status}
+                            </span>
                           </p>
                         </div>
                       </div>
@@ -368,7 +379,7 @@ const OrdersPage = () => {
                           {pageNum}
                         </button>
                       );
-                    }
+                    },
                   )}
                 </div>
 

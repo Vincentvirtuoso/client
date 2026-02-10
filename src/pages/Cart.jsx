@@ -17,6 +17,7 @@ import {
 import useCart from "../hooks/useCart";
 import ProductImage from "../components/ui/ProductImage";
 import { validCodes } from "./mockData";
+import { useNavigate } from "react-router-dom";
 
 const Cart = () => {
   const {
@@ -34,6 +35,8 @@ const Cart = () => {
     clearCoupon,
     clearCart,
   } = useCart();
+
+  const navigate = useNavigate();
 
   const [couponCode, setCouponCode] = useState("");
   const shippingFee = subtotal > 100000 ? 0 : 2500;
@@ -139,11 +142,11 @@ const Cart = () => {
                 {items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex gap-4 p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:shadow-md transition-all"
+                    className="flex gap-4 p-4 rounded-xl border border-gray-200 hover:border-red-300 hover:shadow-md transition-all"
                   >
                     <div className="relative w-20">
                       <ProductImage
-                        className="object-cover"
+                        className="object-contain"
                         src={item.image}
                         alt={item.name}
                         size="20"
@@ -162,7 +165,7 @@ const Cart = () => {
                           <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
                             <button
                               onClick={() => decrementQuantity(item.id)}
-                              className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-md transition-colors"
+                              className="w-8 h-8 flex items-center justify-center hover:bg-red-600 hover:text-white rounded-md transition-colors"
                             >
                               <LuMinus className="w-4 h-4" />
                             </button>
@@ -171,7 +174,7 @@ const Cart = () => {
                             </span>
                             <button
                               onClick={() => incrementQuantity(item.id)}
-                              className="w-8 h-8 flex items-center justify-center hover:bg-white rounded-md transition-colors"
+                              className="w-8 h-8 flex items-center justify-center hover:bg-red-600 hover:text-white rounded-md transition-colors"
                               disabled={item.quantity >= item.maxUnits}
                             >
                               <LuPlus className="w-4 h-4" />
@@ -200,7 +203,13 @@ const Cart = () => {
                           </p>
                         )}
                       </div>
-                      <div className="text-right mt-2">
+                      <div className="flex justify-between gap-2 items-center mt-2">
+                        <button
+                          className="text-xs bg-red-600 text-white hover:bg-red-700 font-medium p-2 px-3 rounded-lg"
+                          onClick={() => navigate(`/product/${item.id}`)}
+                        >
+                          View Details
+                        </button>
                         <p className="font-bold text-gray-900">
                           ₦{(item.price * item.quantity).toLocaleString()}
                         </p>

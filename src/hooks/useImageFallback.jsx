@@ -1,124 +1,189 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
 
-export default function useImageFallback(src, options = {}) {
+export default function useImageReady(src, options = {}) {
   const {
-    fallbackSrc = "/images/fallbac.png",
-    fallbackIcon: FallbackIcon = null,
-    withShimmer = true,
-    effect = "blur",
-    onLoad: externalOnLoad,
+    fallbackSrc = "/images/fallback.png",
+    onReady,
     onError: externalOnError,
+    checkImmediately = true,
   } = options;
 
-  const [currentSrc, setCurrentSrc] = useState(src);
+  const [isReady, setIsReady] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [currentSrc, setCurrentSrc] = useState(src);
   const [attemptedFallback, setAttemptedFallback] = useState(false);
 
   const imgRef = useRef(null);
 
-  // Reset when the source changes (new image)
+  // Reset when source changes
   useEffect(() => {
     setCurrentSrc(src);
+    setIsReady(false);
     setHasError(false);
-    setIsLoading(true);
     setAttemptedFallback(false);
   }, [src]);
 
-  const handleLoad = useCallback(
-    (event) => {
-      setIsLoading(false);
-      setHasError(false);
-      externalOnLoad?.(event);
-    },
-    [externalOnLoad]
-  );
-
-  const handleError = useCallback(
-    (event) => {
-      setIsLoading(false);
-      setHasError(true);
-
-      // Only attempt fallback once
-      if (fallbackSrc && !attemptedFallback && currentSrc !== fallbackSrc) {
-        setAttemptedFallback(true);
-        setCurrentSrc(fallbackSrc);
-        setIsLoading(true);
-        setHasError(false);
+  // Core image checking function
+  const checkImage = useCallback((url) => {
+    return new Promise((resolve, reject) => {
+      if (!url) {
+        reject(new Error("No URL provided"));
         return;
       }
 
-      // If even fallback fails
-      externalOnError?.(event);
-    },
-    [attemptedFallback, currentSrc, fallbackSrc, externalOnError]
-  );
+      const img = new Image();
 
-  // Timeout safeguard for loading
+      img.onload = () => {
+        resolve({
+          src: url,
+          width: img.width,
+          height: img.height,
+          naturalWidth: img.naturalWidth,
+          naturalHeight: img.naturalHeight,
+        });
+      };
+
+      img.onerror = () => {
+        reject(new Error(`Failed to load image: ${url}`));
+      };
+
+      img.src = url;
+    });
+  }, []);
+
+  // Main effect to check image readiness
   useEffect(() => {
-    if (!isLoading) return;
-    const timeoutId = setTimeout(() => setIsLoading(false), 4000);
-    return () => clearTimeout(timeoutId);
-  }, [isLoading]);
+    if (!checkImmediately) return;
 
-  const render = useCallback(
-    (props = {}) => {
-      const {
-        className = "w-full h-full object-cover rounded-md",
-        alt = "image",
-        ...rest
-      } = props;
+    let isMounted = true;
 
-      if (isLoading && withShimmer) {
-        return (
-          <div className={`flex items-center justify-center ${className}`}>
-            <div className="w-6 h-6 border-4 border-gray-300 border-t-transparent rounded-full animate-spin" />
-          </div>
-        );
+    const verifyImage = async () => {
+      try {
+        // Check primary source
+        const result = await checkImage(currentSrc);
+
+        if (isMounted) {
+          setIsReady(true);
+          setHasError(false);
+          onReady?.(result);
+        }
+      } catch (error) {
+        if (!isMounted) return;
+
+        setHasError(true);
+
+        // Try fallback if available and not already attempted
+        if (fallbackSrc && !attemptedFallback && currentSrc !== fallbackSrc) {
+          setAttemptedFallback(true);
+          setCurrentSrc(fallbackSrc);
+          setIsReady(false); // Reset for fallback attempt
+
+          try {
+            const fallbackResult = await checkImage(fallbackSrc);
+            if (isMounted) {
+              setIsReady(true);
+              setHasError(false);
+              onReady?.(fallbackResult);
+            }
+          } catch (fallbackError) {
+            if (isMounted) {
+              externalOnError?.(fallbackError);
+            }
+          }
+        } else {
+          externalOnError?.(error);
+        }
       }
+    };
 
-      if (hasError && FallbackIcon) {
-        return (
-          <div
-            className={`flex items-center justify-center bg-gray-100 dark:bg-gray-700 text-gray-400 rounded-md ${className}`}
-          >
-            <FallbackIcon className="w-8 h-8" />
-          </div>
-        );
-      }
+    verifyImage();
 
-      return (
-        <LazyLoadImage
-          ref={imgRef}
-          src={currentSrc}
-          alt={alt}
-          className={`absolute inset-0 transition-transform duration-500 ${className}`}
-          onLoad={handleLoad}
-          onError={handleError}
-          wrapperClassName="absolute inset-0"
-          effect={effect}
-          {...rest}
-        />
-      );
-    },
-    [
-      currentSrc,
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    currentSrc,
+    fallbackSrc,
+    attemptedFallback,
+    checkImmediately,
+    checkImage,
+    onReady,
+    externalOnError,
+  ]);
+
+  // Manually trigger image check
+  const triggerCheck = useCallback(async () => {
+    setIsReady(false);
+    setHasError(false);
+
+    try {
+      const result = await checkImage(currentSrc);
+      setIsReady(true);
+      onReady?.(result);
+      return result;
+    } catch (error) {
+      setHasError(true);
+      externalOnError?.(error);
+      throw error;
+    }
+  }, [currentSrc, checkImage, onReady, externalOnError]);
+
+  // Preload image without setting state
+  const preload = useCallback(async () => {
+    return checkImage(currentSrc);
+  }, [currentSrc, checkImage]);
+
+  // Get current status
+  const status = useMemo(
+    () => ({
+      isReady,
       hasError,
-      isLoading,
-      FallbackIcon,
-      handleLoad,
-      handleError,
-      effect,
-      withShimmer,
-    ]
+      src: currentSrc,
+      isFallback: attemptedFallback,
+    }),
+    [isReady, hasError, currentSrc, attemptedFallback],
   );
 
   return {
-    currentSrc,
+    // Status information
+    isReady,
     hasError,
-    isLoading,
-    render,
+    currentSrc,
+    isFallback: attemptedFallback,
+    status,
+
+    // Control methods
+    triggerCheck,
+    preload,
+
+    // For rendering if needed (optional)
+    render: useCallback(
+      (props = {}) => {
+        const { className = "", alt = "", ...rest } = props;
+
+        if (hasError && fallbackSrc && currentSrc !== fallbackSrc) {
+          return (
+            <img
+              ref={imgRef}
+              src={fallbackSrc}
+              alt={alt}
+              className={className}
+              {...rest}
+            />
+          );
+        }
+
+        return (
+          <img
+            ref={imgRef}
+            src={currentSrc}
+            alt={alt}
+            className={className}
+            {...rest}
+          />
+        );
+      },
+      [currentSrc, hasError, fallbackSrc],
+    ),
   };
 }

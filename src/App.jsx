@@ -15,7 +15,7 @@ const App = () => {
   const onSignIn = () => {
     window.location.href = "/auth";
   };
-  const { orderStats } = useOrder();
+  const { orderStats, loading } = useOrder();
 
   return (
     <AuthProvider>
@@ -58,7 +58,8 @@ const App = () => {
           <Sidebar
             promoBannerVisible={promoBannerVisible}
             onSignIn={onSignIn}
-            orders={orderStats.total || 0}
+            orders={orderStats.total}
+            ordersLoading={loading}
           />
         </div>
 
@@ -67,6 +68,7 @@ const App = () => {
           <Navbar
             promoBannerVisible={promoBannerVisible}
             onSignIn={onSignIn}
+            ordersLoading={loading}
             orders={orderStats.total || 0}
           />
           <main

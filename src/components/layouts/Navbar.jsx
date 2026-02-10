@@ -26,6 +26,7 @@ const Navbar = ({
   logo = "ShopVerse",
   promoBannerVisible,
   orders = 0,
+  ordersLoading,
 }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -487,6 +488,7 @@ const Navbar = ({
                 orderCount={orders}
                 loading={loading}
                 isBooting={isBooting}
+                ordersLoading={ordersLoading}
               />
 
               {/* Enhanced Cart Button */}
@@ -515,6 +517,8 @@ const Navbar = ({
           onSignIn={onSignIn}
           onSignOut={() => logout()}
           promoBannerVisible={promoBannerVisible}
+          orders={orders}
+          ordersLoading={ordersLoading}
         />
       )}
     </>
