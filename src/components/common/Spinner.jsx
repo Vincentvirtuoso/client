@@ -1,6 +1,6 @@
 const Spinner = ({
   size = "md",
-  color = "white",
+  color = "secondary",
   borderWidth = "4",
   className = "",
   svgClassName = "",
@@ -27,8 +27,8 @@ const Spinner = ({
   const colorClasses = {
     white: "text-white",
     black: "text-black",
-    primary: "text-red-600",
-    secondary: "text-gray-600",
+    primary: "text-red-500",
+    secondary: "text-gray-600 dark:text-gray-200",
     success: "text-green-600",
     warning: "text-yellow-600",
     danger: "text-red-600",
