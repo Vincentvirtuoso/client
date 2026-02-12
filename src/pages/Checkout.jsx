@@ -96,28 +96,22 @@ const Checkout = () => {
   const [saveShippingInfo, setSaveShippingInfo] = useState(false);
   const [savedShippingInfo, setSavedShippingInfo] = useState(null);
 
-  // Initialize form with saved data on component mount
   useEffect(() => {
     loadSavedShippingInfoFromStorage();
   }, []);
 
-  // Load saved shipping info from localStorage
   const loadSavedShippingInfoFromStorage = () => {
     try {
       const saved = localStorage.getItem("shippingInfo");
       if (saved) {
         const parsedInfo = JSON.parse(saved);
         setSavedShippingInfo(parsedInfo);
-
-        // Optionally auto-fill if you want
-        // setForm(prev => ({ ...prev, ...parsedInfo }));
       }
     } catch (error) {
       console.error("Error loading saved shipping info:", error);
     }
   };
 
-  // Load saved info into form
   const loadSavedShippingInfo = () => {
     if (savedShippingInfo) {
       setForm((prev) => ({
@@ -183,6 +177,8 @@ const Checkout = () => {
         country: form.country,
       },
       paymentMethod,
+      saveShippingInfo,
+      savedShippingInfo,
       discountCode: null,
       notes: form.instructions || "",
       billingAddress: selectedAddress?.isBillingDifferent
@@ -197,11 +193,14 @@ const Checkout = () => {
     };
   };
 
-  const handlePlaceOrder = async () => {
-    if (!validateForm()) return;
+  const handleSaveShippingInfo = () => {
     if (saveShippingInfo) {
       saveShippingInfoToStorage();
     }
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!validateForm()) return;
     if (items.length === 0) {
       toast.error("Your cart is empty");
       return;
@@ -209,15 +208,13 @@ const Checkout = () => {
     const orderData = prepareOrderData();
 
     setIsProcessing(true);
+    handleSaveShippingInfo();
 
     try {
       if (paymentMethod === "paystack") {
-        // For Paystack, you'll handle payment first
-        // The order will be created after successful payment via webhook
-        return; // Payment component will handle navigation
+        return;
       }
 
-      // For Cash on Delivery
       const response = await createOrder(orderData);
 
       if (response.data) {
@@ -402,6 +399,7 @@ const Checkout = () => {
                   email={form.email}
                   prepareOrderData={prepareOrderData}
                   onClose={() => setIsProcessing(false)}
+                  handleSaveShippingInfo={handleSaveShippingInfo}
                 />
               </div>
             )}

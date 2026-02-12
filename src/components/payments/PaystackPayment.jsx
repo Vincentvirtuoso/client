@@ -3,7 +3,12 @@ import toast from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
 import { useOrder } from "../../hooks/useOrder";
 
-const PaystackPayment = ({ amount, email, prepareOrderData }) => {
+const PaystackPayment = ({
+  amount,
+  email,
+  prepareOrderData,
+  handleSaveShippingInfo,
+}) => {
   const [loading, setLoading] = useState(false);
   const { createOrder } = useOrder();
 
@@ -14,12 +19,11 @@ const PaystackPayment = ({ amount, email, prepareOrderData }) => {
     }
 
     setLoading(true);
+    handleSaveShippingInfo?.();
 
-    // ✅ Generate fresh reference for each payment attempt
     const timestamp = Date.now();
     const reference = `PSK-${uuidv4()}-${timestamp}`;
 
-    // ✅ Get order data from parent
     const orderData = prepareOrderData ? prepareOrderData() : null;
 
     if (!orderData) {
@@ -29,7 +33,6 @@ const PaystackPayment = ({ amount, email, prepareOrderData }) => {
     }
 
     try {
-      // ✅ Backend creates order AND initializes Paystack payment
       const result = await createOrder({
         ...orderData,
         paymentMethod: "paystack",
