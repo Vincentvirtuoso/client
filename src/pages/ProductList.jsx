@@ -19,27 +19,27 @@ function ProductList() {
   const searchParams = new URLSearchParams(location.search);
 
   const [searchTerm, setSearchTerm] = useState(
-    searchParams.get("search") || ""
+    searchParams.get("search") || "",
   );
   const [selectedCategories, setSelectedCategories] = useState(
     searchParams.get("categories")
       ? searchParams.get("categories").split(",")
-      : []
+      : [],
   );
   const [priceRange, setPriceRange] = useState([
     parseInt(searchParams.get("minPrice")) || 0,
     parseInt(searchParams.get("maxPrice")) || 300000,
   ]);
   const [minRating, setMinRating] = useState(
-    parseInt(searchParams.get("minRating")) || 0
+    parseInt(searchParams.get("minRating")) || 0,
   );
   const [inStockOnly, setInStockOnly] = useState(
-    searchParams.get("inStock") === "true"
+    searchParams.get("inStock") === "true",
   );
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState(searchParams.get("sort") || "featured");
   const [currentPage, setCurrentPage] = useState(
-    parseInt(searchParams.get("page")) || 1
+    parseInt(searchParams.get("page")) || 1,
   );
 
   const debouncedSearchTerm = useDebounce(searchTerm, 700);
@@ -98,7 +98,7 @@ function ProductList() {
   // Extract categories from products
   const categories = useMemo(() => {
     if (!products) return [];
-    return [...new Set(products.map((product) => product.category))];
+    return [...new Set(products.map((product) => product.category?.name))];
   }, [products]);
 
   // Update URL params immediately (no debounce)
@@ -181,7 +181,7 @@ function ProductList() {
         label: category,
         onRemove: () =>
           setSelectedCategories((prev) =>
-            prev.filter((cat) => cat !== category)
+            prev.filter((cat) => cat !== category),
           ),
       });
     });

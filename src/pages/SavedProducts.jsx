@@ -31,7 +31,7 @@ const SavedProducts = () => {
 
   // Get unique categories from saved items
   const categories = useMemo(() => {
-    return [...new Set(savedForLater.map((item) => item.category))];
+    return [...new Set(savedForLater.map((item) => item.category?.name))];
   }, [savedForLater]);
 
   // Filter and sort saved products
@@ -41,11 +41,13 @@ const SavedProducts = () => {
         searchTerm === "" ||
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchTerm.toLowerCase());
+        product.category?.name
+          ?.toLowerCase()
+          .includes(searchTerm.toLowerCase());
 
       const matchesCategory =
         selectedCategories.length === 0 ||
-        selectedCategories.includes(product.category);
+        selectedCategories.includes(product.category?.name);
 
       return matchesSearch && matchesCategory;
     });
@@ -93,7 +95,7 @@ const SavedProducts = () => {
     } else {
       // Fallback: copy to clipboard
       navigator.clipboard.writeText(
-        `${window.location.origin}/product/${product.id}`
+        `${window.location.origin}/product/${product.id}`,
       );
       // Optional: Show copied notification
     }
@@ -309,7 +311,7 @@ const SavedProducts = () => {
                               ]);
                             } else {
                               setSelectedCategories((prev) =>
-                                prev.filter((c) => c !== category)
+                                prev.filter((c) => c !== category),
                               );
                             }
                           }}

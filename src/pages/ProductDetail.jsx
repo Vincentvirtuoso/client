@@ -29,7 +29,7 @@ const StarRating = ({ rating, size = "md" }) => {
 
   for (let i = 0; i < fullStars; i++) {
     stars.push(
-      <LuStar key={i} className={`${iconSize} text-yellow-400 fill-current`} />
+      <LuStar key={i} className={`${iconSize} text-yellow-400 fill-current`} />,
     );
   }
 
@@ -38,14 +38,14 @@ const StarRating = ({ rating, size = "md" }) => {
       <LuStarHalf
         key="half"
         className={`${iconSize} text-yellow-400 fill-current`}
-      />
+      />,
     );
   }
 
   const remainingStars = 5 - stars.length;
   for (let i = 0; i < remainingStars; i++) {
     stars.push(
-      <LuStar key={`empty-${i}`} className={`${iconSize} text-gray-300`} />
+      <LuStar key={`empty-${i}`} className={`${iconSize} text-gray-300`} />,
     );
   }
 
@@ -87,7 +87,7 @@ const ProductDetail = () => {
   const prevImage = () => {
     if (product?.images) {
       setSelectedImage(
-        (prev) => (prev - 1 + product.images.length) % product.images.length
+        (prev) => (prev - 1 + product.images.length) % product.images.length,
       );
     }
   };
@@ -131,7 +131,7 @@ const ProductDetail = () => {
   // Calculate discount percentage
   const discount = product.originalPrice
     ? Math.round(
-        ((product.originalPrice - product.price) / product.originalPrice) * 100
+        ((product.originalPrice - product.price) / product.originalPrice) * 100,
       )
     : 0;
 
@@ -259,7 +259,7 @@ const ProductDetail = () => {
           <motion.div variants={itemVariants} className="space-y-6">
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-sm text-gray-500">
-              <span>{product.category}</span>
+              <span>{product.category?.name}</span>
               <span>•</span>
               <span>{product.subCategory || "Uncategorized"}</span>
               <span>•</span>
@@ -466,7 +466,7 @@ const ProductDetail = () => {
                               <LuCheck className="w-4 h-4 text-green-500" />
                               {item.charAt(0).toUpperCase() + item.slice(1)}
                             </li>
-                          )
+                          ),
                         )}
                       </ul>
                     </div>
@@ -481,7 +481,9 @@ const ProductDetail = () => {
                         </div>
                         <div className="flex justify-between">
                           <dt className="text-gray-600">Category</dt>
-                          <dd className="font-medium">{product.category}</dd>
+                          <dd className="font-medium">
+                            {product.category?.name}
+                          </dd>
                         </div>
                         <div className="flex justify-between">
                           <dt className="text-gray-600">Subcategory</dt>
@@ -520,7 +522,9 @@ const ProductDetail = () => {
                       </div>
                       <div className="flex justify-between py-2 border-b border-gray-100">
                         <dt className="text-gray-600">Category</dt>
-                        <dd className="font-medium">{product.category}</dd>
+                        <dd className="font-medium">
+                          {product.category?.name}
+                        </dd>
                       </div>
                       <div className="flex justify-between py-2 border-b border-gray-100">
                         <dt className="text-gray-600">Availability</dt>
@@ -556,7 +560,7 @@ const ProductDetail = () => {
                                     </dt>
                                     <dd className="font-medium">{value}</dd>
                                   </div>
-                                )
+                                ),
                             )}
                           </>
                         )}
@@ -603,8 +607,8 @@ const ProductDetail = () => {
                       {product.rating >= 4
                         ? "This product is highly rated by customers"
                         : product.rating >= 3
-                        ? "This product has good customer ratings"
-                        : "Be the first to review this product"}
+                          ? "This product has good customer ratings"
+                          : "Be the first to review this product"}
                     </p>
                   </div>
                 </motion.div>

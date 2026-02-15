@@ -98,7 +98,7 @@ const MobileSearchMenu = ({
                         searchSuggestions.filter((s) =>
                           s.text
                             .toLowerCase()
-                            .includes(searchQuery.toLowerCase())
+                            .includes(searchQuery.toLowerCase()),
                         ).length
                       }{" "}
                       found
@@ -108,7 +108,9 @@ const MobileSearchMenu = ({
                   <div className="space-y-2">
                     {searchSuggestions
                       .filter((s) =>
-                        s.text.toLowerCase().includes(searchQuery.toLowerCase())
+                        s.text
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase()),
                       )
                       .slice(0, 8)
                       .map((suggestion, idx) => (
@@ -117,7 +119,7 @@ const MobileSearchMenu = ({
                           onClick={() => {
                             handleSuggestionClick(
                               suggestion.text,
-                              suggestion.href
+                              suggestion.href,
                             );
                             setMobileSearchOpen(false);
                           }}
@@ -127,9 +129,9 @@ const MobileSearchMenu = ({
                             <div className="text-sm font-medium text-gray-900">
                               {suggestion.text}
                             </div>
-                            {suggestion.category && (
+                            {suggestion.category?.name && (
                               <div className="text-xs text-gray-500 mt-1">
-                                in {suggestion.category}
+                                in {suggestion.category?.name}
                               </div>
                             )}
                           </div>
@@ -167,7 +169,7 @@ const MobileSearchMenu = ({
                             onClick={() => {
                               handleSuggestionClick(
                                 suggestion.text,
-                                suggestion.href
+                                suggestion.href,
                               );
                               setMobileSearchOpen(false);
                             }}
@@ -196,7 +198,7 @@ const MobileSearchMenu = ({
                             onClick={() => {
                               handleSuggestionClick(
                                 suggestion.text,
-                                suggestion.href
+                                suggestion.href,
                               );
                               setMobileSearchOpen(false);
                             }}
