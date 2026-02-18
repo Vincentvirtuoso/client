@@ -19,9 +19,11 @@ import {
   LuStar,
   LuBadgeAlert,
   LuLogIn,
+  LuShoppingBasket,
+  LuShoppingCart,
 } from "react-icons/lu";
 import { motion, AnimatePresence } from "framer-motion";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 const UserMenu = ({
   isAuthenticated = false,
@@ -30,6 +32,7 @@ const UserMenu = ({
   userInitial = "",
   wishlistCount = 0,
   orderCount = 0,
+  cartCount = 0,
   notificationCount = 0,
   onSignOut = () => {},
   user = null,
@@ -91,40 +94,22 @@ const UserMenu = ({
   const menuItems = useMemo(
     () => [
       {
-        icon: User,
-        label: "My Profile",
-        href: "/profile",
-        badge: null,
-        description: "View and edit your profile",
-        color: "text-blue-600",
-        bgColor: "bg-blue-50",
+        icon: LuShoppingCart,
+        label: "Cart",
+        href: "/cart",
+        badge: cartCount > 0 ? cartCount : null,
+        description: "Your saved items",
+        color: "text-purple-600",
+        bgColor: "bg-purple-50",
       },
       {
-        icon: Package,
-        label: "My Orders",
-        href: "/orders",
-        badge: orderCount,
-        description: "Track and manage orders",
-        color: "text-green-600",
-        bgColor: "bg-green-50",
-      },
-      {
-        icon: Heart,
+        icon: LuShoppingBasket,
         label: "Wishlist",
         href: "/wishlist",
         badge: wishlistCount > 0 ? wishlistCount : null,
         description: "Your saved items",
         color: "text-pink-600",
         bgColor: "bg-pink-50",
-      },
-      {
-        icon: LuBell,
-        label: "Notifications",
-        href: "/notifications",
-        badge: notificationCount,
-        description: "Your latest alerts",
-        color: "text-amber-600",
-        bgColor: "bg-amber-50",
       },
       {
         icon: Settings,
@@ -145,7 +130,7 @@ const UserMenu = ({
         bgColor: "bg-indigo-50",
       },
     ],
-    [orderCount, wishlistCount, notificationCount],
+    [wishlistCount, cartCount],
   );
 
   // Get user initial
@@ -267,17 +252,16 @@ const UserMenu = ({
                   </p>
 
                   {/* Account status - only show if user exists */}
-                  {user?.membership && (
+                  {user?.role && (
                     <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 bg-linear-to-r from-amber-500 to-yellow-500 text-white text-[10px] font-bold rounded-full">
                       <LuStar className="w-2.5 h-2.5" />
-                      {user.membership}
+                      {user.role}
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Reauth warning - only show if user exists */}
-              {user?.needsReauth && (
+              {!user && (
                 <div className="mt-3 p-2 bg-amber-50 border border-amber-200 rounded-lg">
                   <div className="flex items-center gap-2">
                     <LuCircleAlert className="w-4 h-4 text-amber-600 shrink-0" />
@@ -293,7 +277,7 @@ const UserMenu = ({
             {user && (
               <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/50">
                 <div className="grid grid-cols-3 gap-2">
-                  <div className="text-center">
+                  <Link className="text-center" to="/orders">
                     <div className="text-lg font-bold text-gray-900">
                       {ordersLoading ? (
                         <div className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin inline-flex" />
@@ -302,19 +286,19 @@ const UserMenu = ({
                       )}
                     </div>
                     <div className="text-xs text-gray-600">Orders</div>
-                  </div>
-                  <div className="text-center">
+                  </Link>
+                  <Link className="text-center" to="/wishlist">
                     <div className="text-lg font-bold text-gray-900">
                       {wishlistCount}
                     </div>
                     <div className="text-xs text-gray-600">Wishlist</div>
-                  </div>
-                  <div className="text-center">
+                  </Link>
+                  <Link to="/notifications" className="text-center">
                     <div className="text-lg font-bold text-gray-900">
                       {notificationCount}
                     </div>
                     <div className="text-xs text-gray-600">Alerts</div>
-                  </div>
+                  </Link>
                 </div>
               </div>
             )}
@@ -330,14 +314,7 @@ const UserMenu = ({
                   <NavLink
                     key={`menu-item-${index}`}
                     to={item.href}
-                    className={`
-            flex items-center gap-3 px-5 py-3 w-full
-            transition-all duration-200 group
-            hover:bg-gray-50 active:bg-gray-100
-            text-left
-            ${index === 0 ? "rounded-t-lg" : ""}
-            ${index === menuItems.length - 1 ? "rounded-b-lg" : ""}
-          `}
+                    className={`flex items-center gap-3 px-5 py-3 w-full transition-all duration-200 group hover:bg-gray-50 active:bg-gray-100 text-left ${index === 0 ? "rounded-t-lg" : ""} ${index === menuItems.length - 1 ? "rounded-b-lg" : ""}`}
                     role="menuitem"
                   >
                     <div
@@ -369,18 +346,13 @@ const UserMenu = ({
             </div>
 
             {user && (
-              <div className="border-t border-gray-100 px-5 py-3 bg-gray-50/50">
+              <div className="border-t border-gray-100 bg-gray-50/50">
                 <button
                   onClick={() => {
                     onSignOut();
                     closeMenu();
                   }}
-                  className="
-          flex items-center justify-between w-full px-4 py-3
-          text-gray-700 hover:text-red-600 hover:bg-red-50
-          transition-all duration-200 active:bg-red-100
-          rounded-lg group
-        "
+                  className="flex items-center justify-between w-full px-4 py-3 text-gray-700 hover:text-red-600 hover:bg-red-50 transition-all duration-200 active:bg-red-100 rounded-lg group"
                   role="menuitem"
                 >
                   <div className="flex items-center gap-3">

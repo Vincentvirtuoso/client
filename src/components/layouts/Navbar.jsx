@@ -162,7 +162,7 @@ const Navbar = ({
       {/* Promo Banner */}
 
       <header
-        className={`bg-white fixed lg:left-72 left-0 right-0 z-50 h-20 transition-all duration-300 lg:border-b lg:border-gray-200 ${
+        className={`bg-white fixed lg:left-64 left-0 right-0 z-50 h-20 transition-all duration-300 lg:border-b lg:border-gray-200 ${
           scrolled ? "not-lg:shadow-md" : "not-lg:shadow-sm px-4"
         }`}
       >
@@ -484,6 +484,7 @@ const Navbar = ({
                 setUserMenuOpen={setUserMenuOpen}
                 userMenuRef={userMenuRef}
                 wishlistCount={wishlistCount}
+                cartCount={cartCountValue}
                 user={user}
                 orderCount={orders}
                 loading={loading}

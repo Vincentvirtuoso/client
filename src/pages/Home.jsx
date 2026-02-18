@@ -94,15 +94,6 @@ export default function Home() {
     },
   ];
 
-  const categories = [
-    { name: "Electronics", icon: "💻", count: "2.5k+" },
-    { name: "Fashion", icon: "👗", count: "5k+" },
-    { name: "Home & Living", icon: "🏠", count: "3k+" },
-    { name: "Beauty", icon: "💄", count: "1.8k+" },
-    { name: "Sports", icon: "⚽", count: "2k+" },
-    { name: "Books", icon: "📚", count: "4k+" },
-  ];
-
   useEffect(() => {
     if (isPaused) return;
     const timer = setInterval(() => {
@@ -307,7 +298,7 @@ export default function Home() {
               >
                 {/* Animated gradient overlay */}
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"
+                  className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 0.6 }}
                   transition={{ duration: 1 }}
@@ -346,7 +337,7 @@ export default function Home() {
           whileTap={{ scale: 0.9 }}
           onClick={() =>
             setCurrentSlide(
-              (prev) => (prev - 1 + heroSlides.length) % heroSlides.length
+              (prev) => (prev - 1 + heroSlides.length) % heroSlides.length,
             )
           }
           className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 backdrop-blur-sm hover:bg-opacity-30 text-red-500 p-3 rounded-full transition-all z-20"
@@ -395,39 +386,12 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="py-8 px-4">
+      <section className="p-4">
         <FeaturesSection />
       </section>
 
       {/* Categories */}
       <CategorySection />
-      {/* <section className="py-16 container mx-auto px-4">
-        <motion.h2
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-3xl md:text-4xl font-bold text-center mb-12"
-        >
-          Shop by Category
-        </motion.h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {categories.map((cat, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              whileHover={{ scale: 1.05, y: -5 }}
-              className="bg-white rounded-lg p-6 text-center shadow-md hover:shadow-xl transition-shadow cursor-pointer"
-            >
-              <div className="text-4xl mb-3">{cat.icon}</div>
-              <h3 className="font-semibold mb-1">{cat.name}</h3>
-              <p className="text-sm text-gray-500">{cat.count} items</p>
-            </motion.div>
-          ))}
-        </div>
-      </section> */}
 
       {/* Featured Products */}
       <section className="py-16 bg-gray-100">

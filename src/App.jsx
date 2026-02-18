@@ -64,7 +64,7 @@ const App = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 lg:ml-72">
+        <div className="flex-1 lg:ml-64">
           <Navbar
             promoBannerVisible={promoBannerVisible}
             onSignIn={onSignIn}

@@ -64,7 +64,7 @@ export const useApi = () => {
         }
       }
     },
-    []
+    [],
   );
 
   const abort = useCallback((key) => {
@@ -85,5 +85,5 @@ export const useApi = () => {
     };
   }, []);
 
-  return { loading, error, callApi, abort };
+  return { loading, error, callApi, abort, setError };
 };
